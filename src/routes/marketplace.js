@@ -1,0 +1,256 @@
+/**
+ * Public Marketplace + x402 Proxy Routes
+ *
+ * GET  /marketplace/endpoints          - Browse all active endpoints
+ * GET  /marketplace/endpoints/:slug    - Single endpoint detail
+ * GET  /marketplace/categories         - Available categories
+ * GET  /marketplace/stats              - Public platform stats
+ *
+ * GET  /proxy/:slug                    - PAID proxy (GET endpoints)
+ * POST /proxy/:slug                    - PAID proxy (POST endpoints)
+ * PUT  /proxy/:slug                    - PAID proxy (PUT endpoints)
+ * etc.
+ */
+import { Router } from "express";
+import { endpoints, transactions } from "../db/queries.js";
+import { requirePayment } from "../middleware/x402.js";
+import { proxyRequest } from "../services/proxy.js";
+
+const router = Router();
+
+// ─── Public Discovery ─────────────────────────────────────────────────────────
+
+router.get("/endpoints", async (req, res) => {
+  try {
+    const { category, search, limit = 20, offset = 0 } = req.query;
+    const list = await endpoints.listMarketplace({
+      category,
+      search,
+      limit: Math.min(parseInt(limit), 100),
+      offset: parseInt(offset),
+    });
+
+    const total = list.length > 0 ? parseInt(list[0].total_count || 0) : 0;
+
+    res.json({
+      endpoints: list.map((e) => ({
+        id:           e.id,
+        slug:         e.slug,
+        name:         e.name,
+        description:  e.description,
+        category:     e.category,
+        tags:         e.tags,
+        method:       e.method,
+        priceAtomic:  e.price_atomic,
+        priceDisplay: e.price_display,
+        totalCalls:   parseInt(e.total_calls),
+        provider:     e.provider_name,
+        proxyUrl:     `${process.env.SERVER_URL}/proxy/${e.slug}`,
+        createdAt:    e.created_at,
+      })),
+      pagination: {
+        total,
+        limit:  parseInt(limit),
+        offset: parseInt(offset),
+        hasMore: parseInt(offset) + list.length < total,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/endpoints/:slug", async (req, res) => {
+  try {
+    const endpoint = await endpoints.findBySlug(req.params.slug);
+    if (!endpoint || endpoint.status !== "active") {
+      return res.status(404).json({ error: "Endpoint not found" });
+    }
+
+    const recentTxs = await transactions.listByEndpoint(endpoint.id, 5);
+
+    res.json({
+      id:           endpoint.id,
+      slug:         endpoint.slug,
+      name:         endpoint.name,
+      description:  endpoint.description,
+      category:     endpoint.category,
+      tags:         endpoint.tags,
+      method:       endpoint.method,
+      priceAtomic:  endpoint.price_atomic,
+      priceDisplay: endpoint.price_display,
+      totalCalls:   parseInt(endpoint.total_calls),
+      provider:     endpoint.provider_name,
+      proxyUrl:     `${process.env.SERVER_URL}/proxy/${endpoint.slug}`,
+      x402: {
+        scheme:            "exact",
+        network:           process.env.NETWORK,
+        asset:             process.env.USDC_ASSET,
+        amount:            String(endpoint.price_atomic),
+        payTo:             process.env.PLATFORM_WALLET,
+        maxTimeoutSeconds: 60,
+      },
+      recentActivity: recentTxs.map((t) => ({
+        payerMasked: t.payer_address.slice(0, 6) + "..." + t.payer_address.slice(-4),
+        at: t.created_at,
+        upstreamStatus: t.upstream_status,
+        responseTimeMs: t.response_time_ms,
+      })),
+      createdAt: endpoint.created_at,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/categories", async (req, res) => {
+  try {
+    const cats = await endpoints.categories();
+    res.json({ categories: cats });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/stats", async (req, res) => {
+  try {
+    const stats = await transactions.platformStats();
+    res.json({
+      totalProviders:    parseInt(stats.total_providers || 0),
+      activeEndpoints:   parseInt(stats.active_endpoints || 0),
+      totalTransactions: parseInt(stats.total_transactions || 0),
+      totalVolumeUsdc:   parseFloat(stats.total_volume_usdc || 0),
+      calls24h:          parseInt(stats.calls_24h || 0),
+      uniquePayers:      parseInt(stats.unique_payers || 0),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── x402 Proxy ───────────────────────────────────────────────────────────────
+
+/**
+ * Universal paid proxy handler
+ * Handles GET, POST, PUT, PATCH, DELETE to /proxy/:slug
+ */
+async function proxyHandler(req, res) {
+  const { slug } = req.params;
+
+  // ── 1. Look up endpoint ───────────────────────────────────────────────────
+  let endpoint;
+  try {
+    endpoint = await endpoints.findBySlug(slug);
+  } catch (err) {
+    return res.status(500).json({ error: "Database error" });
+  }
+
+  if (!endpoint) {
+    return res.status(404).json({
+      error: `No endpoint registered for slug '${slug}'`,
+      hint: "Browse available endpoints at /marketplace/endpoints",
+    });
+  }
+
+  if (endpoint.status !== "active") {
+    return res.status(503).json({
+      error: `Endpoint '${slug}' is currently ${endpoint.status}`,
+    });
+  }
+
+  if (endpoint.provider_status !== "active") {
+    return res.status(503).json({ error: "This provider's account is currently suspended" });
+  }
+
+  // ── 2. Enforce method ─────────────────────────────────────────────────────
+  if (req.method !== endpoint.method) {
+    return res.status(405).json({
+      error: `This endpoint only accepts ${endpoint.method} requests`,
+    });
+  }
+
+  // ── 3. x402 payment gate ──────────────────────────────────────────────────
+  // requirePayment returns a middleware — we invoke it inline
+  await new Promise((resolve, reject) => {
+    requirePayment(endpoint)(req, res, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  }).catch((err) => {
+    if (!res.headersSent) res.status(500).json({ error: "Payment processing error: " + err.message });
+    throw err; // stop execution
+  });
+
+  // If payment failed, res has already been sent by requirePayment
+  if (res.headersSent) return;
+
+  // ── 4. Forward to upstream ────────────────────────────────────────────────
+  let upstream;
+  try {
+    upstream = await proxyRequest({
+      upstreamUrl:        endpoint.upstream_url,
+      method:             endpoint.method,
+      incomingHeaders:    req.headers,
+      query:              req.query,
+      body:               req.body ? Buffer.from(JSON.stringify(req.body)) : null,
+      upstreamAuthHeader: endpoint.upstream_auth_header || null,
+    });
+  } catch (err) {
+    console.error(`[proxy] upstream error for ${slug}:`, err.message);
+    // Payment is already settled — we must still record the transaction
+    await recordTransaction(req, endpoint, null, 500, 0);
+    return res.status(502).json({
+      error: "Upstream provider error — your payment was recorded and will be reviewed",
+      details: err.message,
+    });
+  }
+
+  // ── 5. Record transaction ─────────────────────────────────────────────────
+  await recordTransaction(req, endpoint, upstream.status, upstream.timeMs);
+
+  // ── 6. Return upstream response to client ─────────────────────────────────
+  // Forward upstream headers (skip ones we already set)
+  for (const [k, v] of Object.entries(upstream.headers || {})) {
+    if (k.toLowerCase() !== "content-length") {
+      try { res.setHeader(k, v); } catch {}
+    }
+  }
+
+  res.status(upstream.status);
+  res.end(upstream.body);
+}
+
+async function recordTransaction(req, endpoint, upstreamStatus, responseTimeMs, overrideStatus) {
+  try {
+    const { x402 } = req;
+    if (!x402) return; // payment wasn't settled (shouldn't happen here)
+
+    await transactions.record({
+      endpointId:    endpoint.id,
+      providerId:    endpoint.provider_id,
+      txHash:        x402.transaction,
+      network:       x402.network,
+      payerAddress:  x402.payer,
+      amountAtomic:  x402.amountAtomic,
+      platformFeePct: x402.feePct,
+      platformCut:   x402.platformCut,
+      providerCut:   x402.providerCut,
+      requestMethod: req.method,
+      requestPath:   req.path,
+      requestIp:     req.ip,
+      upstreamStatus: overrideStatus ?? upstreamStatus,
+      responseTimeMs,
+    });
+  } catch (err) {
+    console.error("[proxy] failed to record transaction:", err.message);
+  }
+}
+
+// Register proxy for all HTTP methods
+router.get("/:slug",    proxyHandler);
+router.post("/:slug",   proxyHandler);
+router.put("/:slug",    proxyHandler);
+router.patch("/:slug",  proxyHandler);
+router.delete("/:slug", proxyHandler);
+
+export default router;
