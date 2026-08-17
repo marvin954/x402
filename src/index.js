@@ -141,34 +141,12 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-
-async function start() {
-  await waitForDB();
-
-  app.listen(PORT, "0.0.0.0", () => {
-    const fee   = process.env.PLATFORM_FEE_PERCENT || 15;
-    const net   = process.env.NETWORK || "eip155:84532";
-    const wallet = (process.env.PLATFORM_WALLET || "NOT SET").slice(0, 20);
-
-    console.log(`
-╔══════════════════════════════════════════════════════════════╗
-║          MAMMBA x402 Marketplace — Live 🚀                  ║
-╠══════════════════════════════════════════════════════════════╣
-║  URL:         http://0.0.0.0:${PORT}                          ║
-║  Network:     ${net}                          ║
-║  Platform:    ${wallet}...                    ║
-║  Fee:         ${fee}% (providers earn ${100 - parseInt(fee)}%)              ║
-╠══════════════════════════════════════════════════════════════╣
-║  Marketplace: /marketplace/endpoints                        ║
-║  Provider:    /api/providers/register                       ║
-║  Admin:       /admin/stats                                  ║
-║  Docs:        /                                             ║
-╚══════════════════════════════════════════════════════════════╝`);
-  });
+// ─── Boot ────────────────────────────────────────────────────────────────────
+const isMain = process.argv[1]?.endsWith("index.js");
+if (isMain) {
+  const PORT = process.env.PORT || 3000;
+  try { await waitForDB(); } catch (err) { console.error(err.message); process.exit(1); }
+  app.listen(PORT, "0.0.0.0", () => console.log(`MAMMBA x402 running on http://0.0.0.0:${PORT}`));
 }
 
-start().catch((err) => {
-  console.error("Fatal startup error:", err);
-  process.exit(1);
-});
+export default app;
