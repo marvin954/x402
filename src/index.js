@@ -8,6 +8,7 @@ import { waitForDB } from "./db/pool.js";
 import providersRouter   from "./routes/providers.js";
 import marketplaceRouter from "./routes/marketplace.js";
 import adminRouter       from "./routes/admin.js";
+import { endpoints } from "./db/queries.js";
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -36,7 +37,54 @@ app.use((req, res, next) => {
 });
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
+// ─── OpenAPI Discovery (required for x402scan) ────────────────────────────────
+app.get("/openapi.json", async (req, res) => {
+  const SERVER_URL = process.env.SERVER_URL || "https://x402-sage.vercel.app";
+  const NETWORK    = process.env.NETWORK    || "eip155:84532";
+  const USDC_ASSET = process.env.USDC_ASSET || "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+  const PAY_TO     = process.env.PLATFORM_WALLET || "";
 
+  let activeEndpoints = [];
+  try { activeEndpoints = await endpoints.listMarketplace({ limit: 100 }); } catch {}
+
+  const paths = {};
+  for (const ep of activeEndpoints) {
+    const method  = ep.method.toLowerCase();
+    const priceUsd = (ep.price_atomic / 1_000_000).toFixed(6);
+    paths[`/proxy/${ep.slug}`] = {
+      [method]: {
+        operationId: ep.slug.replace(/-/g, "_"),
+        summary: ep.name,
+        description: ep.description || ep.name,
+        tags: ep.tags?.length ? ep.tags : [ep.category],
+        "x-payment-info": {
+          price: { mode: "fixed", currency: "USD", amount: priceUsd },
+          protocols: [{ x402: { network: NETWORK, asset: USDC_ASSET, payTo: PAY_TO, maxTimeoutSeconds: 60 } }],
+        },
+        ...(method !== "get" ? { requestBody: { required: false, content: { "application/json": { schema: { type: "object", additionalProperties: true } } } } } : {}),
+        ...(method === "get" ? { parameters: [{ name: "q", in: "query", required: false, schema: { type: "string" }, description: "Forwarded to upstream" }] } : {}),
+        responses: {
+          "200": { description: "Upstream provider response", content: { "application/json": { schema: { type: "object", additionalProperties: true } } } },
+          "402": { description: "Payment Required — include X-Payment header" },
+        },
+      },
+    };
+  }
+
+  res.setHeader("Cache-Control", "public, max-age=60");
+  res.json({
+    openapi: "3.1.0",
+    info: {
+      title: "MAMMBA x402 Marketplace",
+      version: "1.0.0",
+      description: "Multi-tenant API marketplace — pay per request with USDC on Base.",
+      "x-guidance": `Pay-per-request marketplace. GET /proxy/{slug} without X-Payment to see requirements. Sign USDC transfer on ${NETWORK} to ${PAY_TO}, base64-encode, send as X-Payment header. Browse endpoints at ${SERVER_URL}/marketplace/endpoints`,
+    },
+    servers: [{ url: SERVER_URL }],
+    paths,
+    "x-x402": { version: 2, network: NETWORK, asset: USDC_ASSET, payTo: PAY_TO, facilitator: process.env.FACILITATOR_URL || "https://x402.xyz/facilitator" },
+  });
+});
 // Health check (used by Docker healthcheck)
 app.get("/health", (req, res) => {
   res.json({ status: "ok", ts: Date.now() });
