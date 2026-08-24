@@ -37,6 +37,11 @@ app.use((req, res, next) => {
 });
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
+// Serve favicon.ico
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end(); // No content, but prevents 404 logs
+});
+
 // ─── OpenAPI Discovery (required for x402scan) ────────────────────────────────
 app.get("/openapi.json", async (req, res) => {
   const SERVER_URL = process.env.SERVER_URL || "https://x402-sage.vercel.app";
@@ -78,6 +83,9 @@ app.get("/openapi.json", async (req, res) => {
       title: "MAMMBA x402 Marketplace",
       version: "1.0.0",
       description: "Multi-tenant API marketplace — pay per request with USDC on Base.",
+      contact: {
+        email: "info@mammbaent.com" // Add contact email for verification
+      },
       "x-guidance": `Pay-per-request marketplace. GET /proxy/{slug} without X-Payment to see requirements. Sign USDC transfer on ${NETWORK} to ${PAY_TO}, base64-encode, send as X-Payment header. Browse endpoints at ${SERVER_URL}/marketplace/endpoints`,
     },
     servers: [{ url: SERVER_URL }],
