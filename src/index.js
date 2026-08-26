@@ -165,7 +165,7 @@ app.get("/openapi.json", async (req, res) => {
           schema: {
             properties: {
               input: contract.requestBodySchema || GENERIC_JSON_OBJECT,
-              output: contract.responseSchema,
+              output: contract.responseSchema || GENERIC_JSON_OBJECT,
             }
           }
         }
