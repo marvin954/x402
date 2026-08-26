@@ -82,7 +82,7 @@ export function validateEndpointContract({ queryParameters, requestBodySchema, r
 export function endpointContract(endpoint) {
   return {
     queryParameters: endpoint.query_parameters || [],
-    requestBodySchema: endpoint.request_body_schema || { type: "object" },
+    requestBodySchema: endpoint.request_body_schema || null,
     responseSchema: endpoint.response_schema || BUILT_IN_RESPONSE_SCHEMAS[endpoint.slug] || GENERIC_JSON_OBJECT,
   };
 }

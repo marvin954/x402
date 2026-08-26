@@ -85,13 +85,20 @@ export const providers = {
 // ─── Endpoints ────────────────────────────────────────────────────────────────
 
 export const endpoints = {
-  async create({ providerId, slug, name, description, category, tags, upstreamUrl, method, priceAtomic, upstreamAuthHeader }) {
+  async create({
+    providerId, slug, name, description, category, tags, upstreamUrl, method, priceAtomic,
+    upstreamAuthHeader, queryParameters = [], requestBodySchema = null, responseSchema = null,
+  }) {
     const { rows } = await query(
       `INSERT INTO endpoints
-         (provider_id, slug, name, description, category, tags, upstream_url, method, price_atomic, upstream_auth_header)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         (provider_id, slug, name, description, category, tags, upstream_url, method, price_atomic,
+          upstream_auth_header, query_parameters, request_body_schema, response_schema)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
-      [providerId, slug, name, description, category, tags, upstreamUrl, method, priceAtomic, upstreamAuthHeader || null]
+      [
+        providerId, slug, name, description, category, tags, upstreamUrl, method, priceAtomic,
+        upstreamAuthHeader || null, queryParameters, requestBodySchema, responseSchema,
+      ]
     );
     return rows[0];
   },
@@ -160,7 +167,10 @@ export const endpoints = {
   },
 
   async update(id, providerId, fields) {
-    const allowed = ["name", "description", "category", "tags", "price_atomic", "upstream_url", "upstream_auth_header"];
+    const allowed = [
+      "name", "description", "category", "tags", "price_atomic", "upstream_url", "upstream_auth_header",
+      "query_parameters", "request_body_schema", "response_schema",
+    ];
     const sets = [];
     const vals = [];
     let i = 1;

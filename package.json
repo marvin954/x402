@@ -5,16 +5,20 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "start":   "node src/index.js",
-    "dev":     "NODE_ENV=development node --watch src/index.js",
-    "test":    "node scripts/test.js",
+    "start": "node src/index.js",
+    "dev": "NODE_ENV=development node --watch src/index.js",
+    "test": "node scripts/test.js",
+    "test:unit": "node --test test/*.test.js",
     "migrate": "node scripts/migrate.js",
-    "seed":    "node scripts/seed.js"
+    "seed": "node scripts/seed.js"
   },
-  "engines": { "node": ">=20.0.0" },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
-    "cors":    "^2.8.5",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
-    "pg":      "^8.11.3"
+    "pg": "^8.11.3"
   }
 }

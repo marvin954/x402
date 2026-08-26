@@ -9,6 +9,7 @@ import providersRouter   from "./routes/providers.js";
 import marketplaceRouter from "./routes/marketplace.js";
 import adminRouter       from "./routes/admin.js";
 import { endpoints } from "./db/queries.js";
+import { endpointContract } from "./lib/openapi-contract.js";
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -44,7 +45,7 @@ app.get("/favicon.ico", (req, res) => {
 
 // ─── OpenAPI Discovery (required for x402scan) ────────────────────────────────
 app.get("/openapi.json", async (req, res) => {
-  const SERVER_URL = process.env.SERVER_URL || "https://x402-sage.vercel.app";
+  const SERVER_URL = (process.env.SERVER_URL || "https://x402-sage.vercel.app").replace(/\/+$/, "");
   const NETWORK    = process.env.NETWORK    || "eip155:84532";
   const USDC_ASSET = process.env.USDC_ASSET || "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
   const PAY_TO     = process.env.PLATFORM_WALLET || "";
@@ -54,8 +55,76 @@ app.get("/openapi.json", async (req, res) => {
 
   const paths = {};
   for (const ep of activeEndpoints) {
-    const method  = ep.method.toLowerCase();
+    const method = ep.method.toLowerCase();
     const priceUsd = (ep.price_atomic / 1_000_000).toFixed(6);
+    const contract = endpointContract(ep);
+
+    // Build the 402 Payment Required response schema based on x402 v2 spec
+    const paymentRequiredSchema = {
+      type: "object",
+      required: ["x402Version", "error", "resource", "accepts"],
+      properties: {
+        x402Version: { type: "integer", enum: [2] },
+        error: { type: "string" },
+        resource: {
+          type: "object",
+          required: ["url", "description", "mimeType"],
+          properties: {
+            url: { type: "string", format: "uri" },
+            description: { type: "string" },
+            mimeType: { type: "string" }
+          }
+        },
+        accepts: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["scheme", "network", "amount", "asset", "payTo"],
+            properties: {
+              scheme: { type: "string", enum: ["exact"] },
+              network: { type: "string" },
+              amount: { type: "string" },
+              asset: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" },
+              payTo: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" },
+              maxTimeoutSeconds: { type: "integer", minimum: 1 },
+              extra: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  version: { type: "string" }
+                }
+              }
+            }
+          }
+        },
+        extensions: {
+          type: "object",
+          properties: {
+            marketplace: {
+              type: "object",
+              properties: {
+                info: {
+                  type: "object",
+                  properties: {
+                    platform: { type: "string" },
+                    endpointSlug: { type: "string" },
+                    providerName: { type: "string" }
+                  }
+                },
+                schema: {
+                  type: "object",
+                  properties: {
+                    platform: { type: "string" },
+                    endpointSlug: { type: "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
     paths[`/proxy/${ep.slug}`] = {
       [method]: {
         operationId: ep.slug.replace(/-/g, "_"),
@@ -66,14 +135,33 @@ app.get("/openapi.json", async (req, res) => {
           price: { mode: "fixed", currency: "USD", amount: priceUsd },
           protocols: [{ x402: { network: NETWORK, asset: USDC_ASSET, payTo: PAY_TO, maxTimeoutSeconds: 60 } }],
         },
-        ...(method !== "get" ? { requestBody: { required: false, content: { "application/json": { schema: { type: "object", additionalProperties: true } } } } } : {}),
-        ...(method === "get" ? { parameters: [{ name: "q", in: "query", required: false, schema: { type: "string" }, description: "Forwarded to upstream" }] } : {}),
+        parameters: contract.queryParameters.length ? contract.queryParameters : (method === "get" ? [{ name: "q", in: "query", required: false, schema: { type: "string" }, description: "Optional query forwarded to upstream (ignored by demo endpoints)" }] : []),
+        ...(contract.requestBodySchema ? {
+          requestBody: {
+            required: ep.method !== "GET",
+            content: { "application/json": { schema: contract.requestBodySchema } }
+          }
+        } : {}),
         responses: {
-          "200": { description: "Upstream provider response", content: { "application/json": { schema: { type: "object", additionalProperties: true } } } },
-          "402": { description: "Payment Required — include X-Payment header" },
+          "200": {
+            description: "Upstream provider response",
+            content: { "application/json": { schema: contract.responseSchema } }
+          },
+          "402": {
+            description: "Payment Required — include X-Payment header",
+            headers: {
+              "PAYMENT-REQUIRED": {
+                description: "Base64-encoded x402 v2 PaymentRequired JSON object.",
+                required: true,
+                schema: { type: "string", contentEncoding: "base64", contentMediaType: "application/json" }
+              }
+            },
+            content: { "application/json": { schema: paymentRequiredSchema } }
+          }
         },
       },
     };
+  }
 
   // Add marketplace endpoints (free, no payment required)
   paths["/marketplace/endpoints"] = {
@@ -268,7 +356,6 @@ app.get("/openapi.json", async (req, res) => {
       security: [] // No authentication required
     }
   };
-  }
 
   res.setHeader("Cache-Control", "public, max-age=60");
   res.json({

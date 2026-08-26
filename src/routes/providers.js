@@ -17,6 +17,7 @@ import { Router } from "express";
 import { providers, endpoints, transactions, payouts } from "../db/queries.js";
 import { requireProvider } from "../middleware/auth.js";
 import { uniqueSlug, isValidSlug } from "../lib/slugify.js";
+import { validateEndpointContract } from "../lib/openapi-contract.js";
 
 const router = Router();
 
@@ -139,6 +140,9 @@ router.post("/me/endpoints", async (req, res) => {
       priceAtomic,       // raw atomic units, overrides priceUsdc if provided
       slug: requestedSlug,
       upstreamAuthHeader,  // optional: "Bearer sk-..." injected on upstream calls
+      queryParameters,
+      requestBodySchema,
+      responseSchema,
     } = req.body;
 
     // Validation
@@ -161,6 +165,13 @@ router.post("/me/endpoints", async (req, res) => {
       return res.status(400).json({
         error: "Invalid slug — lowercase letters, numbers, hyphens only, 3-50 chars",
       });
+    }
+
+    let contract;
+    try {
+      contract = validateEndpointContract({ queryParameters, requestBodySchema, responseSchema });
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
     }
 
     // Price resolution
@@ -195,6 +206,7 @@ router.post("/me/endpoints", async (req, res) => {
       method: method.toUpperCase(),
       priceAtomic: finalPriceAtomic,
       upstreamAuthHeader: upstreamAuthHeader || null,
+      ...contract,
     });
 
     const providerEarns = parseFloat(((finalPriceAtomic / 1_000_000) * (1 - feePct / 100)).toFixed(6));
@@ -228,17 +240,23 @@ router.post("/me/endpoints", async (req, res) => {
 
 router.put("/me/endpoints/:id", async (req, res) => {
   try {
-    const { priceUsdc, priceAtomic, ...rest } = req.body;
-
+    const { priceUsdc, priceAtomic, queryParameters, requestBodySchema, responseSchema, ...rest } = req.body;
     const fields = { ...rest };
-    if (priceAtomic)      fields.price_atomic = parseInt(priceAtomic, 10);
-    else if (priceUsdc)   fields.price_atomic = Math.round(parseFloat(priceUsdc) * 1_000_000);
+    if (priceAtomic) fields.price_atomic = parseInt(priceAtomic, 10);
+    else if (priceUsdc) fields.price_atomic = Math.round(parseFloat(priceUsdc) * 1_000_000);
+
+    if (queryParameters !== undefined || requestBodySchema !== undefined || responseSchema !== undefined) {
+      const contract = validateEndpointContract({ queryParameters, requestBodySchema, responseSchema });
+      if (queryParameters !== undefined) fields.query_parameters = contract.queryParameters;
+      if (requestBodySchema !== undefined) fields.request_body_schema = contract.requestBodySchema;
+      if (responseSchema !== undefined) fields.response_schema = contract.responseSchema;
+    }
 
     const updated = await endpoints.update(req.params.id, req.provider.id, fields);
     if (!updated) return res.status(404).json({ error: "Endpoint not found" });
     res.json({ endpoint: updated });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 

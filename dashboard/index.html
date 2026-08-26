@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="marketplace-url" content="">
+    <title>x402 Provider Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 x402 Provider Dashboard</h1>
+            <div class="api-key-section">
+                <label for="api-key">Enter your Provider API Key:</label>
+                <input type="password" id="api-key" placeholder="Your API key here" autocomplete="off">
+                <button id="submit-key">Connect</button>
+                <div id="api-key-status" class="status"></div>
+            </div>
+        </header>
+
+        <main>
+            <section id="provider-info" class="card">
+                <h2>Provider Information</h2>
+                <div class="loading" id="provider-info-loading">Loading...</div>
+                <div class="content" id="provider-info-content" style="display:none;">
+                    <p><strong>Name:</strong> <span id="provider-name"></span></p>
+                    <p><strong>Email:</strong> <span id="provider-email"></span></p>
+                    <p><strong>Wallet:</strong> <span id="provider-wallet"></span></p>
+                    <p><strong>Status:</strong> <span id="provider-status"></span></p>
+                </div>
+            </section>
+
+            <section id="provider-stats" class="card">
+                <h2>Statistics</h2>
+                <div class="loading" id="provider-stats-loading">Loading...</div>
+                <div class="content" id="provider-stats-content" style="display:none;">
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <h3>Endpoints</h3>
+                            <p id="stat-endpoint-count">0</p>
+                        </div>
+                        <div class="stat">
+                            <h3>Total Earned</h3>
+                            <p id="stat-total-earned">0 USDC</p>
+                        </div>
+                        <div class="stat">
+                            <h3>Total Calls</h3>
+                            <p id="stat-total-calls">0</p>
+                        </div>
+                        <div class="stat">
+                            <h3>Balance Pending</h3>
+                            <p id="stat-balance-pending">0 USDC</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="endpoints-list" class="card">
+                <h2>Endpoints</h2>
+                <div class="loading" id="endpoints-loading">Loading...</div>
+                <div class="content" id="endpoints-content" style="display:none;">
+                    <table id="endpoints-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Slug</th>
+                                <th>Status</th>
+                                <th>Price</th>
+                                <th>Calls</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="recent-transactions" class="card">
+                <h2>Recent Transactions</h2>
+                <div class="loading" id="transactions-loading">Loading...</div>
+                <div class="content" id="transactions-content" style="display:none;">
+                    <table id="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount (USDC)</th>
+                                <th>Description</th>
+                                <th>Endpoint</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="payouts-history" class="card">
+                <h2>Payout History</h2>
+                <div class="loading" id="payouts-loading">Loading...</div>
+                <div class="content" id="payouts-content" style="display:none;">
+                    <table id="payouts-table">
+                        <thead>
+                            <tr>
+                                <th>Amount (USDC)</th>
+                                <th>Status</th>
+                                <th>Period</th>
+                                <th>Sent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Data refreshes every 30 seconds. <button id="refresh-btn">Refresh Now</button></p>
+            <p><small>Note: Keep your API key secure. This dashboard does not store your key.</small></p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

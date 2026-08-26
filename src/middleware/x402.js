@@ -11,7 +11,7 @@ import http from "http";
 const FACILITATOR_URL = process.env.FACILITATOR_URL || "https://x402.xyz/facilitator";
 const NETWORK         = process.env.NETWORK          || "eip155:84532";
 const USDC_ASSET      = process.env.USDC_ASSET        || "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
-const SERVER_URL      = process.env.SERVER_URL         || "http://localhost:3000";
+const SERVER_URL      = (process.env.SERVER_URL || "http://localhost:3000").replace(/\/+$/, "");
 const MAX_TIMEOUT_SEC = parseInt(process.env.MAX_TIMEOUT_SECONDS || "60", 10);
 const IS_DEV          = process.env.NODE_ENV !== "production";
 
@@ -54,6 +54,11 @@ function buildPaymentRequired(slug, name, description, priceAtomic) {
       },
     },
   };
+}
+
+function respondPaymentRequired(res, requirements) {
+  res.setHeader("PAYMENT-REQUIRED", Buffer.from(JSON.stringify(requirements)).toString("base64"));
+  return res.status(402).json(requirements);
 }
 
 function parsePaymentHeader(raw) {
@@ -154,7 +159,8 @@ export function requirePayment(endpoint) {
 
     // ── Step 1: No header → return 402 ───────────────────────────────────────
     if (!rawHeader) {
-      return res.status(402).json(
+      return respondPaymentRequired(
+        res,
         buildPaymentRequired(endpoint.slug, endpoint.name, endpoint.description, endpoint.price_atomic)
       );
     }
@@ -162,7 +168,7 @@ export function requirePayment(endpoint) {
     // ── Step 2: Parse ─────────────────────────────────────────────────────────
     const paymentPayload = parsePaymentHeader(rawHeader);
     if (!paymentPayload) {
-      return res.status(402).json({
+      return respondPaymentRequired(res, {
         ...buildPaymentRequired(endpoint.slug, endpoint.name, endpoint.description, endpoint.price_atomic),
         error: "Malformed X-Payment header — expected base64-encoded JSON",
       });
@@ -176,7 +182,7 @@ export function requirePayment(endpoint) {
     });
 
     if (!verification.ok || !verification.data?.isValid) {
-      return res.status(402).json({
+      return respondPaymentRequired(res, {
         ...buildPaymentRequired(endpoint.slug, endpoint.name, endpoint.description, endpoint.price_atomic),
         error: verification.data?.invalidReason || verification.error || "Payment verification failed",
       });
@@ -190,7 +196,7 @@ export function requirePayment(endpoint) {
     });
 
     if (!settlement.ok || !settlement.data?.success) {
-      return res.status(402).json({
+      return respondPaymentRequired(res, {
         ...buildPaymentRequired(endpoint.slug, endpoint.name, endpoint.description, endpoint.price_atomic),
         error: settlement.data?.errorReason || "Payment settlement failed",
       });
@@ -213,11 +219,10 @@ export function requirePayment(endpoint) {
       providerCut,
     };
 
-    // Return settlement receipt header to client
-    res.setHeader(
-      "X-Payment-Response",
-      Buffer.from(JSON.stringify(settlement.data)).toString("base64")
-    );
+    // Return the x402 v2 settlement receipt and keep the legacy header for compatibility.
+    const paymentResponse = Buffer.from(JSON.stringify(settlement.data)).toString("base64");
+    res.setHeader("PAYMENT-RESPONSE", paymentResponse);
+    res.setHeader("X-Payment-Response", paymentResponse);
 
     next();
   };
