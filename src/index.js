@@ -160,6 +160,16 @@ app.get("/openapi.json", async (req, res) => {
           }
         },
       },
+      extensions: {
+        bazaar: {
+          schema: {
+            properties: {
+              input: contract.requestBodySchema || GENERIC_JSON_OBJECT,
+              output: contract.responseSchema,
+            }
+          }
+        }
+      },
     };
   }
 
