@@ -38,7 +38,24 @@ export async function generateOpenAPISpec() {
               } 
             } 
           },
-          "402": { description: "Payment Required — include X-Payment header" },
+          "402": {
+            description: "Payment Required — include X-Payment header",
+            headers: {
+              "PAYMENT-REQUIRED": {
+                description: "Base64-encoded x402 v2 payment requirements",
+                schema: {
+                  type: "string"
+                }
+              }
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/x402PaymentRequirements"
+                }
+              }
+            }
+          },
         },
       },
     };
@@ -977,6 +994,150 @@ export async function generateOpenAPISpec() {
           type: "apiKey",
           in: "header",
           name: "X-API-Key"
+        }
+      },
+      schemas: {
+        x402PaymentRequirements: {
+          type: "object",
+          required: [
+            "x402Version",
+            "error",
+            "resource",
+            "accepts"
+          ],
+          properties: {
+            x402Version: {
+              type: "integer",
+              enum: [2],
+              description: "x402 protocol version"
+            },
+            error: {
+              type: "string",
+              description: "Error message indicating payment is required"
+            },
+            resource: {
+              type: "object",
+              required: [
+                "url",
+                "description",
+                "mimeType"
+              ],
+              properties: {
+                url: {
+                  type: "string",
+                  format: "uri",
+                  description: "URL of the resource requiring payment"
+                },
+                description: {
+                  type: "string",
+                  description: "Human-readable description of the resource"
+                },
+                mimeType: {
+                  type: "string",
+                  description: "MIME type of the resource"
+                }
+              }
+            },
+            accepts: {
+              type: "array",
+              description: "Payment schemes accepted",
+              items: {
+                type: "object",
+                required: [
+                  "scheme",
+                  "network",
+                  "amount",
+                  "asset",
+                  "payTo",
+                  "maxTimeoutSeconds"
+                ],
+                properties: {
+                  scheme: {
+                    type: "string",
+                    enum: ["exact"],
+                    description: "Payment scheme"
+                  },
+                  network: {
+                    type: "string",
+                    description: "Blockchain network (eip155 format)"
+                  },
+                  amount: {
+                    type: "string",
+                    description: "Amount required in atomic units"
+                  },
+                  asset: {
+                    type: "string",
+                    pattern: "^0x[0-9a-fA-F]{40}$",
+                    description: "Contract address of the asset"
+                  },
+                  payTo: {
+                    type: "string",
+                    pattern: "^0x[0-9a-fA-F]{40}$",
+                    description: "Destination address for payment"
+                  },
+                  maxTimeoutSeconds: {
+                    type: "integer",
+                    minimum: 1,
+                    maximum: 3600,
+                    description: "Maximum time in seconds to complete payment"
+                  },
+                  extra: {
+                    type: "object",
+                    description: "Extra information about the asset",
+                    properties: {
+                      name: {
+                        type: "string",
+                        description: "Asset name"
+                      },
+                      version: {
+                        type: "string",
+                        description: "Asset version"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            extensions: {
+              type: "object",
+              description: "Vendor-specific extensions",
+              properties: {
+                marketplace: {
+                  type: "object",
+                  properties: {
+                    info: {
+                      type: "object",
+                      properties: {
+                        platform: {
+                          type: "string",
+                          description: "Platform name"
+                        },
+                        endpointSlug: {
+                          type: "string",
+                          description: "Endpoint slug"
+                        },
+                        providerName: {
+                          type: "string",
+                          description: "Provider name"
+                        }
+                      }
+                    },
+                    schema: {
+                      type: "object",
+                      properties: {
+                        platform: {
+                          type: "string"
+                        },
+                        endpointSlug: {
+                          type: "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },

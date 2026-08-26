@@ -40,7 +40,9 @@ app.use((req, res, next) => {
 // ─── Routes ───────────────────────────────────────────────────────────────────
 // Serve favicon.ico
 app.get("/favicon.ico", (req, res) => {
-  res.status(204).end(); // No content, but prevents 404 logs
+  const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="24" font-size="24" fill="%23818cf8">M</text></svg>`;
+  res.setHeader("Content-Type", "image/svg+xml");
+  res.send(svgIcon);
 });
 
 // ─── OpenAPI Discovery (required for x402scan) ────────────────────────────────
@@ -176,10 +178,13 @@ app.use((err, req, res, _next) => {
 
 // ─── Boot ────────────────────────────────────────────────────────────────────
 const isMain = process.argv[1]?.endsWith("index.js");
-if (isMain) {
+const isVercel = process.env.VERCEL === '1';
+
+if (isMain && !isVercel) {
   const PORT = process.env.PORT || 3000;
   try { await waitForDB(); } catch (err) { console.error(err.message); process.exit(1); }
   app.listen(PORT, "0.0.0.0", () => console.log(`MAMMBA x402 running on http://0.0.0.0:${PORT}`));
 }
 
+// For Vercel, we export the app and Vercel handles the listening
 export default app;
