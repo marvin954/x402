@@ -18,7 +18,7 @@ try {
     await pool.query("INSERT INTO schema_migrations (name) VALUES ($1) ON CONFLICT DO NOTHING", ["001_init.sql"]);
   }
 
-  for (const name of files)
+  for (const name of files) {
     const { rowCount } = await pool.query("SELECT 1 FROM schema_migrations WHERE name = $1", [name]);
     if (rowCount) continue;
     const sql = await fs.readFile(path.join(migrationsDir.pathname, name), "utf8");

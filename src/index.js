@@ -5,11 +5,11 @@
 import express from "express";
 import cors from "cors";
 import { waitForDB } from "./db/pool.js";
+import tradingRouter       from "./routes/trading.js";
 import providersRouter   from "./routes/providers.js";
 import marketplaceRouter from "./routes/marketplace.js";
 import adminRouter       from "./routes/admin.js";
 import { endpoints } from "./db/queries.js";
-import { endpointContract } from "./lib/openapi-contract.js";
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -45,344 +45,29 @@ app.get("/favicon.ico", (req, res) => {
 
 // ─── OpenAPI Discovery (required for x402scan) ────────────────────────────────
 app.get("/openapi.json", async (req, res) => {
-  const SERVER_URL = (process.env.SERVER_URL || "https://x402-sage.vercel.app").replace(/\/+$/, "");
-  const NETWORK    = process.env.NETWORK    || "eip155:84532";
-  const USDC_ASSET = process.env.USDC_ASSET || "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
-  const PAY_TO     = process.env.PLATFORM_WALLET || "";
+  try {
+    // Import and use the comprehensive OpenAPI generator
+    const { generateOpenAPISpec } = await import("./openapi-generator.js");
+    const spec = await generateOpenAPISpec();
 
-  let activeEndpoints = [];
-  try { activeEndpoints = await endpoints.listMarketplace({ limit: 100 }); } catch {}
-
-  const paths = {};
-  for (const ep of activeEndpoints) {
-    const method = ep.method.toLowerCase();
-    const priceUsd = (ep.price_atomic / 1_000_000).toFixed(6);
-    const contract = endpointContract(ep);
-
-    // Build the 402 Payment Required response schema based on x402 v2 spec
-    const paymentRequiredSchema = {
-      type: "object",
-      required: ["x402Version", "error", "resource", "accepts"],
-      properties: {
-        x402Version: { type: "integer", enum: [2] },
-        error: { type: "string" },
-        resource: {
-          type: "object",
-          required: ["url", "description", "mimeType"],
-          properties: {
-            url: { type: "string", format: "uri" },
-            description: { type: "string" },
-            mimeType: { type: "string" }
-          }
-        },
-        accepts: {
-          type: "array",
-          items: {
-            type: "object",
-            required: ["scheme", "network", "amount", "asset", "payTo"],
-            properties: {
-              scheme: { type: "string", enum: ["exact"] },
-              network: { type: "string" },
-              amount: { type: "string" },
-              asset: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" },
-              payTo: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" },
-              maxTimeoutSeconds: { type: "integer", minimum: 1 },
-              extra: {
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  version: { type: "string" }
-                }
-              }
-            }
-          }
-        },
-        extensions: {
-          type: "object",
-          properties: {
-            marketplace: {
-              type: "object",
-              properties: {
-                info: {
-                  type: "object",
-                  properties: {
-                    platform: { type: "string" },
-                    endpointSlug: { type: "string" },
-                    providerName: { type: "string" }
-                  }
-                },
-                schema: {
-                  type: "object",
-                  properties: {
-                    platform: { type: "string" },
-                    endpointSlug: { type: "string" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    };
-
-    paths[`/proxy/${ep.slug}`] = {
-      [method]: {
-        operationId: ep.slug.replace(/-/g, "_"),
-        summary: ep.name,
-        description: ep.description || ep.name,
-        tags: ep.tags?.length ? ep.tags : [ep.category],
-        "x-payment-info": {
-          price: { mode: "fixed", currency: "USD", amount: priceUsd },
-          protocols: [{ x402: { network: NETWORK, asset: USDC_ASSET, payTo: PAY_TO, maxTimeoutSeconds: 60 } }],
-        },
-        parameters: contract.queryParameters.length ? contract.queryParameters : (method === "get" ? [{ name: "q", in: "query", required: false, schema: { type: "string" }, description: "Optional query forwarded to upstream (ignored by demo endpoints)" }] : []),
-        ...(contract.requestBodySchema ? {
-          requestBody: {
-            required: ep.method !== "GET",
-            content: { "application/json": { schema: contract.requestBodySchema } }
-          }
-        } : {}),
-        responses: {
-          "200": {
-            description: "Upstream provider response",
-            content: { "application/json": { schema: contract.responseSchema } }
-          },
-          "402": {
-            description: "Payment Required — include X-Payment header",
-            headers: {
-              "PAYMENT-REQUIRED": {
-                description: "Base64-encoded x402 v2 PaymentRequired JSON object.",
-                required: true,
-                schema: { type: "string", contentEncoding: "base64", contentMediaType: "application/json" }
-              }
-            },
-            content: { "application/json": { schema: paymentRequiredSchema } }
-          }
-        },
-      },
-      extensions: {
-        bazaar: {
-          schema: {
-            properties: {
-              input: contract.requestBodySchema || GENERIC_JSON_OBJECT,
-              output: contract.responseSchema || GENERIC_JSON_OBJECT,
-            }
-          }
-        }
-      },
-    };
+    res.setHeader("Cache-Control", "public, max-age=60");
+    res.json(spec);
+  } catch (error) {
+    console.error("[openapi.json] Error generating spec:", error.message);
+    res.status(500).json({ error: "Failed to generate OpenAPI specification" });
   }
-
-  // Add marketplace endpoints (free, no payment required)
-  paths["/marketplace/endpoints"] = {
-    get: {
-      summary: "Browse active paid endpoints",
-      description: "Returns a paginated list of all active endpoints in the marketplace.",
-      operationId: "browseEndpoints",
-      tags: ["marketplace"],
-      parameters: [
-        { name: "category", in: "query", required: false, schema: { type: "string" }, description: "Filter by category" },
-        { name: "search", in: "query", required: false, schema: { type: "string" }, description: "Search term to match against name or description" },
-        { name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 100 }, default: 20, description: "Number of results to return" },
-        { name: "offset", in: "query", required: false, schema: { type: "integer", minimum: 0 }, default: 0, description: "Offset for pagination" }
-      ],
-      responses: {
-        "200": {
-          description: "Successful response with paginated endpoints",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  endpoints: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        id: { type: "string" },
-                        slug: { type: "string" },
-                        name: { type: "string" },
-                        description: { type: "string" },
-                        category: { type: "string" },
-                        tags: { type: "array", items: { type: "string" } },
-                        method: { type: "string" },
-                        priceAtomic: { type: "integer" },
-                        priceDisplay: { type: "string" },
-                        totalCalls: { type: "integer" },
-                        provider: { type: "string" },
-                        proxyUrl: { type: "string" },
-                        createdAt: { type: "string", format: "date-time" }
-                      },
-                      required: ["id", "slug", "name", "method", "priceAtomic"]
-                    }
-                  },
-                  pagination: {
-                    type: "object",
-                    properties: {
-                      total: { type: "integer" },
-                      limit: { type: "integer" },
-                      offset: { type: "integer" },
-                      hasMore: { type: "boolean" }
-                    },
-                    required: ["total", "limit", "offset", "hasMore"]
-                  }
-                },
-                required: ["endpoints", "pagination"]
-              }
-            }
-          }
-        },
-        "500": { description: "Internal server error" }
-      },
-      security: [] // No authentication required
-    }
-  };
-
-  paths["/marketplace/endpoints/{slug}"] = {
-    get: {
-      summary: "Get endpoint details",
-      description: "Returns detailed information about a specific endpoint including its x402 payment requirements.",
-      operationId: "getEndpointDetail",
-      tags: ["marketplace"],
-      parameters: [
-        { name: "slug", in: "path", required: true, schema: { type: "string" }, description: "The endpoint slug" }
-      ],
-      responses: {
-        "200": {
-          description: "Successful response with endpoint details",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  id: { type: "string" },
-                  slug: { type: "string" },
-                  name: { type: "string" },
-                  description: { type: "string" },
-                  category: { type: "string" },
-                  tags: { type: "array", items: { type: "string" } },
-                  method: { type: "string" },
-                  priceAtomic: { type: "integer" },
-                  priceDisplay: { type: "string" },
-                  totalCalls: { type: "integer" },
-                  provider: { type: "string" },
-                  proxyUrl: { type: "string" },
-                  x402: {
-                    type: "object",
-                    properties: {
-                      scheme: { type: "string" },
-                      network: { type: "string" },
-                      asset: { type: "string" },
-                      amount: { type: "string" },
-                      payTo: { type: "string" },
-                      maxTimeoutSeconds: { type: "integer" }
-                    },
-                    required: ["scheme", "network", "asset", "amount", "payTo", "maxTimeoutSeconds"]
-                  },
-                  recentActivity: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        payerMasked: { type: "string" },
-                        at: { type: "string", format: "date-time" },
-                        upstreamStatus: { type: "integer" },
-                        responseTimeMs: { type: "integer" }
-                      }
-                    }
-                  },
-                  createdAt: { type: "string", format: "date-time" }
-                },
-                required: ["id", "slug", "name", "method", "priceAtomic", "x402"]
-              }
-            }
-          }
-        },
-        "404": { description: "Endpoint not found" },
-        "500": { description: "Internal server error" }
-      },
-      security: [] // No authentication required
-    }
-  };
-
-  paths["/marketplace/categories"] = {
-    get: {
-      summary: "Get available categories",
-      description: "Returns a list of all unique categories used by endpoints in the marketplace.",
-      operationId: "getCategories",
-      tags: ["marketplace"],
-      responses: {
-        "200": {
-          description: "Successful response with categories list",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  categories: {
-                    type: "array",
-                    items: { type: "string" }
-                  }
-                },
-                required: ["categories"]
-              }
-            }
-          }
-        },
-        "500": { description: "Internal server error" }
-      },
-      security: [] // No authentication required
-    }
-  };
-
-  paths["/marketplace/stats"] = {
-    get: {
-      summary: "Get platform statistics",
-      description: "Returns platform-wide statistics about transactions, providers, and endpoints.",
-      operationId: "getPlatformStats",
-      tags: ["marketplace"],
-      responses: {
-        "200": {
-          description: "Successful response with platform statistics",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  totalProviders: { type: "integer" },
-                  activeEndpoints: { type: "integer" },
-                  totalTransactions: { type: "integer" },
-                  totalVolumeUsdc: { type: "number", format: "double" },
-                  calls24h: { type: "integer" },
-                  uniquePayers: { type: "integer" }
-                },
-                required: ["totalProviders", "activeEndpoints", "totalTransactions", "totalVolumeUsdc", "calls24h", "uniquePayers"]
-              }
-            }
-          }
-        },
-        "500": { description: "Internal server error" }
-      },
-      security: [] // No authentication required
-    }
-  };
-
-  res.setHeader("Cache-Control", "public, max-age=60");
-  res.json({
-    openapi: "3.1.0",
-    info: {
-      title: "MAMMBA x402 Marketplace",
-      version: "1.0.0",
-      description: "Multi-tenant API marketplace — pay per request with USDC on Base.",
-      contact: {
-        email: "info@mammbaent.com" // Add contact email for verification
-      },
-      "x-guidance": `Pay-per-request marketplace. GET /proxy/{slug} without X-Payment to see requirements. Sign USDC transfer on ${NETWORK} to ${PAY_TO}, base64-encode, send as X-Payment header. Browse endpoints at ${SERVER_URL}/marketplace/endpoints`,
-    },
-    servers: [{ url: SERVER_URL }],
-    paths,
-    "x-x402": { version: 2, network: NETWORK, asset: USDC_ASSET, payTo: PAY_TO, facilitator: process.env.FACILITATOR_URL || "https://x402.xyz/facilitator" },
-  });
+});
+// ─── Well-known x402 discovery (alternative endpoint) ───────────────────────
+app.get('/.well-known/x402', async (req, res) => {
+  try {
+    const { generateOpenAPISpec } = await import("./openapi-generator.js");
+    const spec = await generateOpenAPISpec();
+    res.setHeader("Cache-Control", "public, max-age=60");
+    res.json(spec);
+  } catch (error) {
+    console.error("[/.well-known/x402] Error generating spec:", error.message);
+    res.status(500).json({ error: "Failed to generate OpenAPI specification" });
+  }
 });
 // Health check (used by Docker healthcheck)
 app.get("/health", (req, res) => {
@@ -476,6 +161,7 @@ app.use("/api/providers",   providersRouter);
 app.use("/marketplace",     marketplaceRouter);
 app.use("/proxy",           marketplaceRouter);   // /proxy/:slug lives in marketplace router
 app.use("/admin",           adminRouter);
+app.use("/trading", tradingRouter);     // Trading API for arbitrage agents
 
 // 404
 app.use((req, res) => {

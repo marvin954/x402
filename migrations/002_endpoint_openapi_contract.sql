@@ -4,7 +4,8 @@ ALTER TABLE endpoints
   ADD COLUMN IF NOT EXISTS request_body_schema JSONB,
   ADD COLUMN IF NOT EXISTS response_schema JSONB;
 
-CREATE OR REPLACE VIEW v_marketplace_listing AS
+DROP VIEW IF EXISTS v_marketplace_listing;
+CREATE VIEW v_marketplace_listing AS
 SELECT
     e.id,
     e.slug,
