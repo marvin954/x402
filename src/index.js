@@ -184,11 +184,14 @@ const isVercel = process.env.VERCEL === '1';
 
 if (isMain && !isVercel) {
   const PORT = process.env.PORT || 3000;
-  try { await waitForDB(); } catch (err) { console.error(err.message); process.exit(1); }
-    console.log("[openapi.json] Request received");
-  app.listen(PORT, "0.0.0.0", () => console.log(`MAMMBA x402 running on http://0.0.0.0:${PORT}`));
+  try {
+    await waitForDB();
+    app.listen(PORT, "0.0.0.0", () => console.log(`MAMMBA x402 running on http://0.0.0.0:${PORT}`));
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
 }
 
 // For Vercel, we export the app and Vercel handles the listening
 export default app;
-# Updated for SERVER_URL env var
