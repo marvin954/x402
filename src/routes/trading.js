@@ -1,12 +1,13 @@
 /**
  * Trading API (for arbitrage agents)
- * 
+ *
  * GET  /prices          - Get current prices for trading pairs
  * POST  /trade          - Initiate a trade (returns 402 Payment Required)
  * GET  /trade/:id/complete - Check trade completion on blockchain
  */
 import { Router } from "express";
 import { requirePayment } from "../middleware/x402.js";
+import https from "https";
 
 const router = Router();
 
@@ -19,7 +20,6 @@ const router = Router();
 router.get("/prices", async (req, res) => {
   try {
     // Fetch prices from CoinGecko (same as crypto-prices endpoint)
-    const https = await import('https');
     const response = await new Promise((resolve, reject) => {
       const options = {
         hostname: 'api.coingecko.com',
@@ -29,7 +29,7 @@ router.get("/prices", async (req, res) => {
         headers: { 'User-Agent': 'x402-marketplace/1.0' }
       };
 
-      const req = https.default.request(options, (res) => {
+      const req = https.request(options, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
@@ -121,7 +121,6 @@ router.post("/trade", async (req, res) => {
     }
 
     // Get current price for this pair
-    const https = await import('https');
     const pricesResponse = await new Promise((resolve) => {
       const options = {
         hostname: 'api.coingecko.com',
@@ -131,7 +130,7 @@ router.post("/trade", async (req, res) => {
         headers: { 'User-Agent': 'x402-marketplace/1.0' }
       };
 
-      const req = https.default.request(options, (res) => {
+      const req = https.request(options, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
