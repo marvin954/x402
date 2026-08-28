@@ -934,6 +934,24 @@ export async function generateOpenAPISpec() {
             }
           }
         },
+        "402": {
+          description: "Payment Required — include X-Payment header",
+          headers: {
+            "PAYMENT-REQUIRED": {
+              description: "Base64-encoded x402 v2 payment requirements",
+              schema: {
+                type: "string"
+              }
+            }
+          },
+          "content": {
+            "application/json": {
+              schema: {
+                "$ref": "#/components/schemas/x402PaymentRequirements"
+              }
+            }
+          }
+        },
         "400": { description: "Validation error" },
         "500": { description: "Failed to initiate trade" }
       }
