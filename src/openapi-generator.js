@@ -60,18 +60,16 @@ export async function generateOpenAPISpec() {
       },
     };
 
-    // Add request body for non-GET methods
+    // Add request body for all methods (to satisfy x402scan input schema requirement)
     // Forward any JSON body to upstream service
-    if (method !== "get") {
-      pathObj[method].requestBody = {
-        required: false, // Body is optional
-        content: {
-          "application/json": {
-            schema: ep.request_body_schema || { type: "object", additionalProperties: true }
-          }
+    pathObj[method].requestBody = {
+      required: false, // Body is optional
+      content: {
+        "application/json": {
+          schema: ep.request_body_schema || { type: "object", additionalProperties: true }
         }
-      };
-    }
+      }
+    };
     // Add query parameters (forwarded to upstream) for GET
     if (method === "get") {
       const parameters = [];
