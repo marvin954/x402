@@ -191,3 +191,4 @@ if (isMain && !isVercel) {
 
 // For Vercel, we export the app and Vercel handles the listening
 export default app;
+# Updated for SERVER_URL env var

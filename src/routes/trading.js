@@ -19,8 +19,8 @@ const router = Router();
 router.get("/prices", async (req, res) => {
   try {
     // Fetch prices from CoinGecko (same as crypto-prices endpoint)
+    const https = await import('https');
     const response = await new Promise((resolve, reject) => {
-      const https = require('https');
       const options = {
         hostname: 'api.coingecko.com',
         port: 443,
@@ -29,7 +29,7 @@ router.get("/prices", async (req, res) => {
         headers: { 'User-Agent': 'x402-marketplace/1.0' }
       };
 
-      const req = https.request(options, (res) => {
+      const req = https.default.request(options, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
@@ -121,8 +121,8 @@ router.post("/trade", async (req, res) => {
     }
 
     // Get current price for this pair
+    const https = await import('https');
     const pricesResponse = await new Promise((resolve) => {
-      const https = require('https');
       const options = {
         hostname: 'api.coingecko.com',
         port: 443,
@@ -131,7 +131,7 @@ router.post("/trade", async (req, res) => {
         headers: { 'User-Agent': 'x402-marketplace/1.0' }
       };
 
-      const req = https.request(options, (res) => {
+      const req = https.default.request(options, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
@@ -147,8 +147,8 @@ router.post("/trade", async (req, res) => {
     // Calculate price for the trading pair
     const btcUsd = pricesResponse.bitcoin?.usd || 0;
     const ethUsd = pricesResponse.ethereum?.usd || 0;
-    const usdtUsd = response.tether?.usd || 1;
-    const daiUsd = response.dai?.usd || 1;
+    const usdtUsd = pricesResponse.tether?.usd || 1;
+    const daiUsd = pricesResponse.dai?.usd || 1;
 
     let price;
     switch (pair.toUpperCase()) {
