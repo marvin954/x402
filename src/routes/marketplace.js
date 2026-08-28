@@ -142,6 +142,7 @@ async function proxyHandler(req, res) {
   try {
     endpoint = await endpoints.findBySlug(slug);
   } catch (err) {
+    console.error("[proxyHandler] Database error in findBySlug:", err);
     return res.status(500).json({ error: "Database error" });
   }
 
