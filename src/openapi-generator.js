@@ -34,7 +34,7 @@ export async function generateOpenAPISpec() {
             description: "Upstream provider response", 
             content: { 
               "application/json": { 
-                schema: ep.response_schema ? ep.response_schema : { type: "object", additionalProperties: true } 
+                schema: ep.response_schema ? ep.response_schema : { type: "object",  } 
               } 
             } 
           },
@@ -63,10 +63,10 @@ export async function generateOpenAPISpec() {
     // Add request body for all methods (to satisfy x402scan input schema requirement)
     // Forward any JSON body to upstream service
     pathObj[method].requestBody = {
-      required: false, // Body is optional
+      required: true, // Body is required
       content: {
         "application/json": {
-          schema: ep.request_body_schema || { type: "object", additionalProperties: true }
+          schema: ep.request_body_schema || { type: "object" }
         }
       }
     };
@@ -80,7 +80,7 @@ export async function generateOpenAPISpec() {
           parameters.push({
             name: paramName,
             in: "query",
-            required: false, // We don't know if they're required by upstream, so mark as optional
+            required: true, // We don't know if they're required by upstream, so mark as optional
             schema: { type: "string" },
             description: `Forwarded to upstream`
           });
@@ -94,7 +94,7 @@ export async function generateOpenAPISpec() {
         parameters.push({
           name: "q",
           in: "query",
-          required: false,
+          required: true,
           schema: { type: "string" },
           description: "Forwarded to upstream"
         });
@@ -412,8 +412,8 @@ export async function generateOpenAPISpec() {
       description: "Returns a list of all providers (paginated).",
       security: [{ apiKey: [] }],
       parameters: [
-        { name: "limit", in: "query", required: false, schema: { type: "integer", example: 50 } },
-        { name: "offset", in: "query", required: false, schema: { type: "integer", example: 0 } }
+        { name: "limit", in: "query", required: true, schema: { type: "integer", example: 50 } },
+        { name: "offset", in: "query", required: true, schema: { type: "integer", example: 0 } }
       ],
       responses: {
         "200": {
@@ -513,7 +513,7 @@ export async function generateOpenAPISpec() {
       description: "Returns all endpoints with a given status (default: pending).",
       security: [{ apiKey: [] }],
       parameters: [
-        { name: "status", in: "query", required: false, schema: { type: "string", example: "pending" } }
+        { name: "status", in: "query", required: true, schema: { type: "string", example: "pending" } }
       ],
       responses: {
         "200": {
@@ -635,7 +635,7 @@ export async function generateOpenAPISpec() {
       description: "Returns recent transactions across the platform.",
       security: [{ apiKey: [] }],
       parameters: [
-        { name: "limit", in: "query", required: false, schema: { type: "integer", example: 100 } }
+        { name: "limit", in: "query", required: true, schema: { type: "integer", example: 100 } }
       ],
       responses: {
         "200": {
@@ -724,7 +724,7 @@ export async function generateOpenAPISpec() {
       description: "Create manual payout records for providers.",
       security: [{ apiKey: [] }],
       requestBody: {
-        required: false,
+        required: true,
         content: {
           "application/json": {
             schema: {
@@ -844,7 +844,7 @@ export async function generateOpenAPISpec() {
         { name: "id", in: "path", required: true, schema: { type: "integer" } }
       ],
       requestBody: {
-        required: false,
+        required: true,
         content: {
           "application/json": {
             schema: {
