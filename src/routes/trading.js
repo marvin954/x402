@@ -124,7 +124,7 @@ router.post("/trade", async (req, res) => {
     const { pair, side, amount } = req.body;
 
     // Validate input
-    if (!pair || !side || !amount) {
+    if (!pair || !side || amount === undefined || amount === null) {
       return res.status(400).json({
         error: "Missing required fields",
         required: ["pair", "side", "amount"]
