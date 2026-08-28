@@ -19,6 +19,31 @@ const router = Router();
  */
 router.get("/prices", async (req, res) => {
   try {
+    // Create a mock endpoint for the x402 payment flow
+    const mockEndpoint = {
+      slug: "prices",
+      name: "Trading Pair Prices",
+      description: "Current prices for trading pairs used by arbitrage agent",
+      price_atomic: Math.round(0.001 * 1_000_000), // $0.001 per call in atomic units
+    };
+
+    // Use the requirePayment middleware to handle the x402 flow
+    await new Promise((resolve, reject) => {
+      requirePayment(mockEndpoint)(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    }).catch((err) => {
+      if (!res.headersSent) {
+        return res.status(500).json({ error: `Payment processing error: ${err.message}` });
+      }
+      throw err;
+    });
+
+    // If payment failed, res has already been sent by requirePayment
+    if (res.headersSent) return;
+
+    // If we reach here, payment was successful (or we're in dev mode and bypassed it)
     // Fetch prices from CoinGecko (same as crypto-prices endpoint)
     const response = await new Promise((resolve, reject) => {
       const options = {
@@ -46,7 +71,7 @@ router.get("/prices", async (req, res) => {
     // CoinGecko gives us: { bitcoin: { usd: ... }, ethereum: { usd: ... }, etc.
     // We need: { "USDC/ETH": price, "ETH/USDC": price, etc. }
     // Note: USDC ≈ 1 USD, USDT ≈ 1 USD, DAI ≈ 1 USD
-    
+
     const btcUsd = response.bitcoin?.usd || 0;
     const ethUsd = response.ethereum?.usd || 0;
     const usdtUsd = response.tether?.usd || 1;  // USDT is pegged to USD
@@ -56,16 +81,16 @@ router.get("/prices", async (req, res) => {
       // ETH pairs
       "USDC/ETH": 1 / ethUsd,       // 1 USDC buys (1/ethUsd) ETH
       "ETH/USDC": ethUsd,           // 1 ETH sells for ethUsd USDC
-      
+
       // BTC pairs
       "USDC/BTC": 1 / btcUsd,       // 1 USDC buys (1/btcUsd) BTC
       "BTC/USDC": btcUsd,           // 1 BTC sells for btcUsd USDC
-      
+
       // USDT pairs (USDT ≈ USD)
       "USDC/USDT": 1 / usdtUsd,     // 1 USDC buys (1/usdtUsd) USDT ≈ 1
       "USDT/USDC": usdtUsd,         // 1 USDT sells for usdtUsd USDC ≈ 1
-      
-      // DAI pairs (DAI ≈ USD)  
+
+      // DAI pairs (DAI ≈ USD)
       "USDC/DAI": 1 / daiUsd,       // 1 USDC buys (1/daiUsd) DAI ≈ 1
       "DAI/USDC": daiUsd,           // 1 DAI sells for daiUsd USDC ≈ 1
     };
@@ -198,6 +223,9 @@ router.post("/trade", async (req, res) => {
       throw err;
     });
 
+    // If payment failed, res has already been sent by requirePayment
+    if (res.headersSent) return;
+
     // If we reach here, payment was successful (or we're in dev mode and bypassed it)
     // Generate a payment ID for this trade
     const paymentId = `pay_${Math.random().toString(36).substring(2, 15)}`;
@@ -230,6 +258,31 @@ router.post("/trade", async (req, res) => {
  */
 router.get("/trade/:paymentId/complete", async (req, res) => {
   try {
+    // Create a mock endpoint for the x402 payment flow
+    const mockEndpoint = {
+      slug: "trade-complete",
+      name: "Trade Completion Check",
+      description: "Check if a trade has been completed on blockchain",
+      price_atomic: Math.round(0.001 * 1_000_000), // $0.001 per call in atomic units
+    };
+
+    // Use the requirePayment middleware to handle the x402 flow
+    await new Promise((resolve, reject) => {
+      requirePayment(mockEndpoint)(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    }).catch((err) => {
+      if (!res.headersSent) {
+        return res.status(500).json({ error: `Payment processing error: ${err.message}` });
+      }
+      throw err;
+    });
+
+    // If payment failed, res has already been sent by requirePayment
+    if (res.headersSent) return;
+
+    // If we reach here, payment was successful (or we're in dev mode and bypassed it)
     const { paymentId } = req.params;
     const { tx_hash } = req.query;
 
@@ -251,14 +304,14 @@ router.get("/trade/:paymentId/complete", async (req, res) => {
     // 1. Look up the paymentId in our database to get trade details
     // 2. Check if the tx_hash has been confirmed on the blockchain
     // 3. Return the trade completion status
-    
+
     // For this implementation, we'll simulate a successful trade completion
     // In production, this would check actual blockchain confirmations
-    
+
     // Simulate checking if transaction is confirmed
     // For demo purposes, we'll consider it confirmed if it looks like a valid tx hash
     const isConfirmed = tx_hash.length >= 10; // Simple validation
-    
+
     if (isConfirmed) {
       res.json({
         success: true,

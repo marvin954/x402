@@ -60,26 +60,49 @@ export async function generateOpenAPISpec() {
       },
     };
 
-    // Add request body for non-GET methods if schema exists
-    if (method !== "get" && ep.request_body_schema) {
+    // Add request body for non-GET methods
+    // Forward any JSON body to upstream service
+    if (method !== "get") {
       pathObj[method].requestBody = {
-        required: true,
+        required: false, // Body is optional
         content: {
           "application/json": {
-            schema: ep.request_body_schema
+            schema: ep.request_body_schema || { type: "object", additionalProperties: true }
           }
         }
       };
     }
     // Add query parameters (forwarded to upstream) for GET
     if (method === "get") {
-      pathObj[method].parameters = [{
-        name: "q",
-        in: "query",
-        required: false,
-        schema: { type: "string" },
-        description: "Forwarded to upstream"
-      }];
+      const parameters = [];
+
+      // Add configured query parameters from endpoint definition
+      if (ep.queryParameters && Array.isArray(ep.queryParameters)) {
+        for (const paramName of ep.queryParameters) {
+          parameters.push({
+            name: paramName,
+            in: "query",
+            required: false, // We don't know if they're required by upstream, so mark as optional
+            schema: { type: "string" },
+            description: `Forwarded to upstream`
+          });
+        }
+      }
+
+      // Always allow additional query parameters for flexibility
+      // (in case upstream accepts parameters not configured in endpoint)
+      if (parameters.length === 0) {
+        // If no specific parameters configured, allow a generic 'q' parameter for backward compatibility
+        parameters.push({
+          name: "q",
+          in: "query",
+          required: false,
+          schema: { type: "string" },
+          description: "Forwarded to upstream"
+        });
+      }
+
+      pathObj[method].parameters = parameters;
     }
 
     paths[`/proxy/${ep.slug}`] = pathObj;
@@ -875,6 +898,7 @@ export async function generateOpenAPISpec() {
     get: {
       summary: "Get current prices for trading pairs",
       description: "Returns current prices for trading pairs used by arbitrage agent.",
+      security: [],
       responses: {
         "200": {
           description: "Trading pair prices",
@@ -883,6 +907,24 @@ export async function generateOpenAPISpec() {
               schema: {
                 type: "object",
                 additionalProperties: { type: "number" }
+              }
+            }
+          }
+        },
+        "402": {
+          description: "Payment Required — include X-Payment header",
+          headers: {
+            "PAYMENT-REQUIRED": {
+              description: "Base64-encoded x402 v2 payment requirements",
+              schema: {
+                type: "string"
+              }
+            }
+          },
+          content: {
+            "application/json": {
+              schema: {
+                "$ref": "#/components/schemas/x402PaymentRequirements"
               }
             }
           }
@@ -896,6 +938,7 @@ export async function generateOpenAPISpec() {
     post: {
       summary: "Initiate a trade",
       description: "Initiate a trade (returns 402 Payment Required when payment needed).",
+      security: [],
       requestBody: {
         required: true,
         content: {
@@ -962,6 +1005,7 @@ export async function generateOpenAPISpec() {
     get: {
       summary: "Check trade completion on blockchain",
       description: "Check if a trade has been completed on blockchain.",
+      security: [],
       parameters: [
         { name: "paymentId", in: "path", required: true, schema: { type: "string" } },
         { name: "tx_hash", in: "query", required: true, schema: { type: "string", pattern: "^0x[0-9a-fA-F]+$" } }
@@ -982,6 +1026,24 @@ export async function generateOpenAPISpec() {
                   completedAt: { type: "string", format: "date-time" },
                   message: { type: "string" }
                 }
+              }
+            }
+          }
+        },
+        "402": {
+          description: "Payment Required — include X-Payment header",
+          headers: {
+            "PAYMENT-REQUIRED": {
+              description: "Base64-encoded x402 v2 payment requirements",
+              schema: {
+                type: "string"
+              }
+            }
+          },
+          content: {
+            "application/json": {
+              schema: {
+                "$ref": "#/components/schemas/x402PaymentRequirements"
               }
             }
           }
