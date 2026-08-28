@@ -48,6 +48,7 @@ app.get("/favicon.ico", (req, res) => {
 // ─── OpenAPI Discovery (required for x402scan) ────────────────────────────────
 app.get("/openapi.json", async (req, res) => {
   try {
+    console.log("[openapi.json] Request received");
     // Import and use the comprehensive OpenAPI generator
     const { generateOpenAPISpec } = await import("./openapi-generator.js");
     const spec = await generateOpenAPISpec();
@@ -62,6 +63,7 @@ app.get("/openapi.json", async (req, res) => {
 // ─── Well-known x402 discovery (alternative endpoint) ───────────────────────
 app.get('/.well-known/x402', async (req, res) => {
   try {
+    console.log("[openapi.json] Request received");
     const { generateOpenAPISpec } = await import("./openapi-generator.js");
     const spec = await generateOpenAPISpec();
     res.setHeader("Cache-Control", "public, max-age=60");
@@ -183,6 +185,7 @@ const isVercel = process.env.VERCEL === '1';
 if (isMain && !isVercel) {
   const PORT = process.env.PORT || 3000;
   try { await waitForDB(); } catch (err) { console.error(err.message); process.exit(1); }
+    console.log("[openapi.json] Request received");
   app.listen(PORT, "0.0.0.0", () => console.log(`MAMMBA x402 running on http://0.0.0.0:${PORT}`));
 }
 
