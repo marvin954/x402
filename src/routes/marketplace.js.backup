@@ -162,14 +162,7 @@ async function proxyHandler(req, res) {
     return res.status(503).json({ error: "This provider's account is currently suspended" });
   }
 
-  // ── 2. Enforce method ─────────────────────────────────────────────────────
-  if (req.method !== endpoint.method) {
-    return res.status(405).json({
-      error: `This endpoint only accepts ${endpoint.method} requests`,
-    });
-  }
-
-  // ── 3. x402 payment gate ──────────────────────────────────────────────────
+  // ── 2. x402 payment gate ──────────────────────────────────────────────────
   // requirePayment returns a middleware — we invoke it inline
   await new Promise((resolve, reject) => {
     requirePayment(endpoint)(req, res, (err) => {
@@ -183,6 +176,13 @@ async function proxyHandler(req, res) {
 
   // If payment failed, res has already been sent by requirePayment
   if (res.headersSent) return;
+
+  // ── 3. Enforce method (moved AFTER payment check) ─────────────────────────
+  if (req.method !== endpoint.method) {
+    return res.status(405).json({
+      error: `This endpoint only accepts ${endpoint.method} requests`,
+    });
+  }
 
   // ── 4. Forward to upstream ────────────────────────────────────────────────
   let upstream;
@@ -219,7 +219,6 @@ async function proxyHandler(req, res) {
   res.status(upstream.status);
   res.end(upstream.body);
 }
-
 async function recordTransaction(req, endpoint, upstreamStatus, responseTimeMs, overrideStatus) {
   try {
     const { x402 } = req;
