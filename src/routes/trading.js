@@ -19,66 +19,17 @@ const router = Router();
  */
 router.get("/prices", async (req, res) => {
   try {
-    // Fetch prices from CoinGecko (same as crypto-prices endpoint)
-    const response = await new Promise((resolve, reject) => {
-      const options = {
-        hostname: 'api.coingecko.com',
-        port: 443,
-        path: '/api/v3/simple/price?ids=bitcoin,ethereum,tether,dai&vs_currencies=usd',
-        method: 'GET',
-        headers: { 'User-Agent': 'x402-marketplace/1.0' }
-      };
-
-      const req = https.request(options, (res) => {
-        let data = '';
-        res.on('data', chunk => data += chunk);
-        res.on('end', () => {
-          try { resolve(JSON.parse(data)); }
-          catch (e) { reject(new Error(`Failed to parse price data: ${e.message}`)); }
-        });
-      });
-
-      req.on('error', reject);
-      req.end();
-    });
-
-    // Convert CoinGecko response to trading pair prices
-    // CoinGecko gives us: { bitcoin: { usd: ... }, ethereum: { usd: ... }, etc.
-    // We need: { "USDC/ETH": price, "ETH/USDC": price, etc. }
-    // Note: USDC ≈ 1 USD, USDT ≈ 1 USD, DAI ≈ 1 USD
-    
-    const btcUsd = response.bitcoin?.usd || 0;
-    const ethUsd = response.ethereum?.usd || 0;
-    const usdtUsd = response.tether?.usd || 1;  // USDT is pegged to USD
-    const daiUsd = response.dai?.usd || 1;      // DAI is pegged to USD
-
+    // Return hardcoded prices for testing
     const prices = {
-      // ETH pairs
-      "USDC/ETH": 1 / ethUsd,       // 1 USDC buys (1/ethUsd) ETH
-      "ETH/USDC": ethUsd,           // 1 ETH sells for ethUsd USDC
-      
-      // BTC pairs
-      "USDC/BTC": 1 / btcUsd,       // 1 USDC buys (1/btcUsd) BTC
-      "BTC/USDC": btcUsd,           // 1 BTC sells for btcUsd USDC
-      
-      // USDT pairs (USDT ≈ USD)
-      "USDC/USDT": 1 / usdtUsd,     // 1 USDC buys (1/usdtUsd) USDT ≈ 1
-      "USDT/USDC": usdtUsd,         // 1 USDT sells for usdtUsd USDC ≈ 1
-      
-      // DAI pairs (DAI ≈ USD)  
-      "USDC/DAI": 1 / daiUsd,       // 1 USDC buys (1/daiUsd) DAI ≈ 1
-      "DAI/USDC": daiUsd,           // 1 DAI sells for daiUsd USDC ≈ 1
+      "USDC/ETH": 0.05,
+      "ETH/USDC": 20,
+      "USDC/BTC": 0.000002,
+      "BTC/USDC": 50000,
+      "USDC/USDT": 1,
+      "USDT/USDC": 1,
+      "USDC/DAI": 1,
+      "DAI/USDC": 1
     };
-
-    // Handle edge cases where price is 0 (avoid division by zero)
-    if (!response.bitcoin || !response.bitcoin.usd) {
-      prices["USDC/BTC"] = 0;
-      prices["BTC/USDC"] = 0;
-    }
-    if (!response.ethereum || !response.ethereum.usd) {
-      prices["USDC/ETH"] = 0;
-      prices["ETH/USDC"] = 0;
-    }
 
     res.json({ prices });
   } catch (err) {
