@@ -9,6 +9,9 @@ import tradingRouter       from "./routes/trading.js";
 import providersRouter   from "./routes/providers.js";
 import marketplaceRouter from "./routes/marketplace.js";
 import adminRouter       from "./routes/admin.js";
+import debugRouter       from "./routes/debug.js";
+import migrateRouter     from "./routes/migrate.js";
+import seedRouter        from "./routes/seed.js";
 import { endpoints } from "./db/queries.js";
 
 const app  = express();
@@ -166,6 +169,9 @@ app.use("/marketplace",     marketplaceRouter);
 app.use("/proxy",           marketplaceRouter);   // /proxy/:slug lives in marketplace router
 app.use("/admin",           adminRouter);
 app.use("/trading", tradingRouter);     // Trading API for arbitrage agents
+app.use("/debug", debugRouter);
+app.use("/migrate", migrateRouter);     // Migration route (protected by token)
+app.use("/seed", seedRouter);           // Seed route (protected by token)
 
 // 404
 app.use((req, res) => {
