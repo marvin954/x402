@@ -64,7 +64,7 @@ export async function generateOpenAPISpec() {
     // Add request body for all endpoints to satisfy x402scan.com requirements
     // Use the actual request body schema from the database if available
     pathObj[method].requestBody = {
-      required: false, // Request body is optional for all endpoints (can be overridden by specific endpoint config)
+      required: true, // Request body is required (but can be empty) to satisfy x402scan.com
       content: {
         "application/json": {
           schema: ep.request_body_schema || {
@@ -79,8 +79,8 @@ export async function generateOpenAPISpec() {
       const parameters = [];
 
       // Add configured query parameters from endpoint definition
-      if (ep.queryParameters && Array.isArray(ep.queryParameters)) {
-        for (const paramName of ep.queryParameters) {
+      if (ep.query_parameters && Array.isArray(ep.query_parameters)) {
+        for (const paramName of ep.query_parameters) {
           parameters.push({
             name: paramName,
             in: "query",
