@@ -25,18 +25,19 @@ export async function generateOpenAPISpec() {
         summary: ep.name,
         description: ep.description || ep.name,
         tags: ep.tags?.length ? ep.tags : [ep.category],
+        security: [{ x402: [] }],
         "x-payment-info": {
           price: { mode: "fixed", currency: "USD", amount: priceUsd },
           protocols: [{ x402: { network: NETWORK, asset: USDC_ASSET, payTo: PAY_TO, maxTimeoutSeconds: 60 } }],
         },
         responses: {
-          "200": { 
-            description: "Upstream provider response", 
-            content: { 
-              "application/json": { 
-                schema: ep.response_schema ? ep.response_schema : { type: "object",  } 
-              } 
-            } 
+          "200": {
+            description: "Upstream provider response",
+            content: {
+              "application/json": {
+                schema: ep.response_schema ? ep.response_schema : { type: "object",  }
+              }
+            }
           },
           "402": {
             description: "Payment Required — include X-Payment header",
@@ -60,13 +61,16 @@ export async function generateOpenAPISpec() {
       },
     };
 
-    // Add request body for all methods (to satisfy x402scan input schema requirement)
-    // Forward any JSON body to upstream service
+    // Add request body for all endpoints to satisfy x402scan.com requirements
+    // Use the actual request body schema from the database if available
     pathObj[method].requestBody = {
-      required: true, // Body is required
+      required: false, // Request body is optional for all endpoints (can be overridden by specific endpoint config)
       content: {
         "application/json": {
-          schema: ep.request_body_schema || { type: "object" }
+          schema: ep.request_body_schema || {
+            type: "object",
+            description: "Optional JSON payload that will be forwarded to the upstream service. Most endpoints do not process request bodies and rely on query parameters instead."
+          }
         }
       }
     };
@@ -80,7 +84,7 @@ export async function generateOpenAPISpec() {
           parameters.push({
             name: paramName,
             in: "query",
-            required: true, // We don't know if they're required by upstream, so mark as optional
+            required: false, // We don't know if they're required by upstream, so mark as optional
             schema: { type: "string" },
             description: `Forwarded to upstream`
           });
@@ -89,16 +93,8 @@ export async function generateOpenAPISpec() {
 
       // Always allow additional query parameters for flexibility
       // (in case upstream accepts parameters not configured in endpoint)
-      if (parameters.length === 0) {
-        // If no specific parameters configured, allow a generic 'q' parameter for backward compatibility
-        parameters.push({
-          name: "q",
-          in: "query",
-          required: true,
-          schema: { type: "string" },
-          description: "Forwarded to upstream"
-        });
-      }
+      // NOTE: We no longer add a generic 'q' parameter for endpoints with no configured parameters
+      // This ensures endpoints that truly don't accept any query parameters are represented accurately
 
       pathObj[method].parameters = parameters;
     }
@@ -1072,6 +1068,12 @@ export async function generateOpenAPISpec() {
           type: "apiKey",
           in: "header",
           name: "X-API-Key"
+        },
+        x402: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "x402-v2",
+          description: "x402 v2 payment required"
         }
       },
       schemas: {
