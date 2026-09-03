@@ -4,7 +4,7 @@ let _pool = null;
 
 function getPool() {
   if (_pool) return _pool;
-  const connectionString = process.env.DATABASE_URL || process.env.x4_DATABASE_URL;
+  const connectionString = process.env.DATABASE_URL || process.env.storage_DATABASE_URL || process.env.x4_DATABASE_URL;
   if (!connectionString) throw new Error("DATABASE_URL is not set in Vercel env vars.");
   const isLocal = connectionString.includes("localhost") || connectionString.includes("127.0.0.1");
   _pool = new Pool({ connectionString, max: 5, idleTimeoutMillis: 10000, connectionTimeoutMillis: 5000, ssl: !isLocal ? { rejectUnauthorized: false } : false });
