@@ -4,7 +4,28 @@
  */
 import pg from "pg";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+function getConnectionString() {
+  // Construct connection string from individual POSTGRES variables if needed
+  let connectionString = process.env.storage_DATABASE_URL || process.env.DATABASE_URL || process.env.x4_DATABASE_URL;
+
+  // If we have individual POSTGRES variables but no DATABASE_URL, construct it
+  if (!connectionString &&
+      process.env.POSTGRES_USER &&
+      process.env.POSTGRES_PASSWORD &&
+      process.env.POSTGRES_DB) {
+    const host = process.env.POSTGRES_HOST || 'localhost';
+    const port = process.env.POSTGRES_PORT || '5432';
+    connectionString = `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${host}:${port}/${process.env.POSTGRES_DB}`;
+  }
+
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not set in Vercel env vars.");
+  }
+
+  return connectionString;
+}
+
+const pool = new pg.Pool({ connectionString: getConnectionString() });
 
 const DEMO_PROVIDERS = [
   {
@@ -133,3 +154,5 @@ async function seed() {
 }
 
 seed();
+
+export default router;
