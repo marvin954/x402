@@ -15,9 +15,17 @@ function getConnectionString() {
     const host = process.env.POSTGRES_HOST || 'localhost';
     const port = process.env.POSTGRES_PORT || '5432';
     connectionString = `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${host}:${port}/${process.env.POSTGRES_DB}`;
+    console.log('[seed] Constructed connectionString from POSTGRES vars:', connectionString);
   }
 
   if (!connectionString) {
+    console.log('[seed] No connection string found. Env vars:');
+    console.log('[seed]   storage_DATABASE_URL:', !!process.env.storage_DATABASE_URL);
+    console.log('[seed]   DATABASE_URL:', !!process.env.DATABASE_URL);
+    console.log('[seed]   x4_DATABASE_URL:', !!process.env.x4_DATABASE_URL);
+    console.log('[seed]   POSTGRES_USER:', !!process.env.POSTGRES_USER);
+    console.log('[seed]   POSTGRES_PASSWORD:', !!process.env.POSTGRES_PASSWORD);
+    console.log('[seed]   POSTGRES_DB:', !!process.env.POSTGRES_DB);
     throw new Error("DATABASE_URL is not set in Vercel env vars.");
   }
 
@@ -142,6 +150,8 @@ router.get("/", async (req, res) => {
           }
 
           console.log(`Seeding endpoint ${ep.slug} with queryParameters:`, ep.queryParameters);
+          console.log(`  Type of queryParameters:`, typeof ep.queryParameters);
+          console.log(`  Is Array:`, Array.isArray(ep.queryParameters));
 await client.query(
             `INSERT INTO endpoints
                (provider_id, slug, name, description, category, tags, upstream_url, method, price_atomic,

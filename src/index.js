@@ -13,6 +13,7 @@ import adminRouter       from "./routes/admin.js";
 // Import debugRouter       from "./routes/debug.js";
 // Import migrateRouter     from "./routes/migrate.js";
 import seedRouter        from "./routes/seed.js";
+import debugRouter       from "./routes/debug.js";
 import { endpoints } from "./db/queries.js";
 
 const app  = express();
@@ -170,7 +171,7 @@ app.use("/marketplace",     marketplaceRouter);
 app.use("/proxy",           marketplaceRouter);   // /proxy/:slug lives in marketplace router
 app.use("/admin",           adminRouter);
 app.use("/trading", tradingRouter);     // Trading API for arbitrage agents
-// app.use("/debug", debugRouter);
+app.use("/debug", debugRouter);         // Debug routes
 // app.use("/migrate", migrateRouter);     // Migration route (protected by token)
 app.use("/seed", seedRouter);           // Seed route (protected by token)
 

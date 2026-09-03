@@ -48,7 +48,23 @@
       "Bash(vercel *)",
       "Bash(curl -s https://x402-marketplace-dashboard.vercel.app)",
       "Bash(openssl rand *)",
-      "Bash(echo \"admin_api_key_placeholder_$\\(openssl rand -hex 8\\)\")"
+      "Bash(echo \"admin_api_key_placeholder_$\\(openssl rand -hex 8\\)\")",
+      "Bash(rtk curl *)",
+      "Bash(rtk find *)",
+      "Bash(rtk diff *)",
+      "Bash(git check-ignore *)",
+      "Bash(rtk wc *)",
+      "Bash(git rm *)",
+      "Bash(curl -s \"https://x402-72fz99jnv-marvin-stokes-projects.vercel.app/migrate?token=$\\(vercel env get MIGRATE_TOKEN production\\)\")",
+      "Bash(curl -s https://x402-72fz99jnv-marvin-stokes-projects.vercel.app/migrate?token=__CMDSUB_OUTPUT__)",
+      "Bash(curl -s \"https://x402-7eut8nqml-marvin-stokes-projects.vercel.app/openapi.json\")",
+      "Bash(curl -s -X POST -H \"Content-Type: application/json\" --data @- https://x402scan.com/validate)",
+      "Bash(curl -s \"https://x402-636lq6jd6-marvin-stokes-projects.vercel.app/marketplace/endpoints\")",
+      "Bash(curl -s \"https://x402-636lq6jd6-marvin-stokes-projects.vercel.app/openapi.json\")",
+      "Bash(curl -s http://127.0.0.1:3000/openapi.json)",
+      "Bash(curl -s http://127.0.0.1:3000/proxy/weather-current)",
+      "Bash(curl -s \"https://x402scan.com/discovery?url=http://127.0.0.1:3000\")",
+      "Bash(curl -s \"http://localhost:3000/openapi.json\")"
     ]
   }
 }
