@@ -90,6 +90,9 @@ export async function generateOpenAPISpec() {
                 "input": {
                   "type": "object",
                   "description": "Request body forwarded to upstream (optional).",
+                  "properties": {
+                    "body": { "type": "object", "description": "Request body forwarded to upstream (optional)." }
+                  },
                   "additionalProperties": { type: "object" }
                 },
                 "output": {
