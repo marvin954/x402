@@ -55,7 +55,7 @@ app.get("/openapi.json", async (req, res) => {
     const { generateOpenAPISpec } = await import("./openapi-generator.js");
     const spec = await generateOpenAPISpec();
 
-    res.setHeader("Cache-Control", "public, max-age=60");
+    res.setHeader("Cache-Control", "no-store");
     res.json(spec);
   } catch (error) {
     console.error("[openapi.json] Error generating spec:", error.message);
@@ -68,7 +68,7 @@ app.get('/.well-known/x402', async (req, res) => {
     console.log("[openapi.json] Request received");
     const { generateOpenAPISpec } = await import("./openapi-generator.js");
     const spec = await generateOpenAPISpec();
-    res.setHeader("Cache-Control", "public, max-age=60");
+    res.setHeader("Cache-Control", "no-store");
     res.json(spec);
   } catch (error) {
     console.error("[/.well-known/x402] Error generating spec:", error.message);
