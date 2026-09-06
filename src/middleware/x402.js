@@ -46,14 +46,14 @@ function buildPaymentRequired(slug, name, description, priceAtomic) {
               type: "object",
               description: "Request body forwarded to upstream (optional).",
               properties: {
-                _body: { type: "object", description: "Request body passed to upstream." },
+                body: { type: "object", description: "Request body passed to upstream." },
               },
             },
             output: {
               type: "object",
               description: "Upstream provider response body.",
               properties: {
-                data: { type: "object", description: "Upstream response body." },
+                example: { type: "object", description: "Upstream response body." },
               },
             },
           },
