@@ -50,6 +50,46 @@ router.get("/", async (req, res) => {
 
       const DEMO_PROVIDERS = [
         {
+          name: "MAMMBA Entertainment",
+          email: "info@mammbaent.com",
+          wallet: "0xD4B508FBA121a7A8D3211e54e15bE967B457d6F9",
+          endpoints: [
+            {
+              slug: "random-joke",
+              name: "Random Joke",
+              description: "A random joke — setup + punchline. Great for social media engagement.",
+              category: "entertainment",
+              tags: ["joke", "humor", "content"],
+              upstreamUrl: "https://official-joke-api.appspot.com/random_joke",
+              queryParameters: [],
+              method: "GET",
+              priceAtomic: 5000,
+            },
+            {
+              slug: "random-meme",
+              name: "Random Meme Concept",
+              description: "A meme concept description for content inspiration.",
+              category: "entertainment",
+              tags: ["meme", "humor", "content"],
+              upstreamUrl: "https://x402-sage.vercel.app/proxy/http-echo",
+              queryParameters: ["q"],
+              method: "GET",
+              priceAtomic: 10000,
+            },
+            {
+              slug: "inspirational-quote",
+              name: "Inspirational Quote",
+              description: "A random inspirational quote with author. Perfect for quote cards.",
+              category: "entertainment",
+              tags: ["quote", "inspiration", "content"],
+              upstreamUrl: "https://api.quotable.io/random",
+              queryParameters: [],
+              method: "GET",
+              priceAtomic: 5000,
+            },
+          ],
+        },
+        {
           name: "WeatherAPI Pro",
           email: "weather@demo.io",
           wallet: "0x1111111111111111111111111111111111111111",
