@@ -250,8 +250,7 @@ router.get("/", async (req, res) => {
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'active')`,
             [provider.id, ep.slug, ep.name, ep.description, ep.category,
              ep.tags, ep.upstreamUrl, ep.method, ep.priceAtomic,
-             null /* upstream_auth_header */, JSON.stringify(ep.queryParameters) /* query_parameters (JSONB) */, null /* request_body_schema */, '{}' /* response_schema */,
-             ep.tags.map(t => String(t)) /* tags is TEXT[] — pass as JS array, pg formats it */]
+             null /* upstream_auth_header */, JSON.stringify(ep.queryParameters) /* query_parameters (JSONB) */, null /* request_body_schema */, '{}' /* response_schema */]
           );
           console.log(`    · Endpoint: ${ep.name} → /proxy/${ep.slug} (${ep.priceAtomic/1e6} USDC)`);
         }
