@@ -16,15 +16,15 @@ function buildFallbackRequestBody(ep) {
 }
 
 // Build a fallback response schema when the endpoint has no stored schema.
-// Must include a non-empty `properties` (not only additionalProperties) — the
-// x402scan discovery tool reports SCHEMA_OUTPUT_MISSING when properties is
-// absent or empty, even if additionalProperties is present.
+// Must include a non-empty `properties.example` — the x402scan discovery tool's
+// extractSchemas2() checks for output.properties.example specifically (dist/index.js:15247),
+// not arbitrary property names.
 function buildFallbackResponseSchema(ep) {
   return {
     type: "object",
     description: "Upstream provider response.",
     properties: {
-      data: { type: "object", description: "Upstream response body." },
+      example: { type: "object", description: "Upstream response body example." },
     },
     additionalProperties: { type: "object" },
   };
@@ -99,7 +99,7 @@ export async function generateOpenAPISpec() {
                   "type": "object",
                   "description": "Upstream provider response body.",
                   "properties": {
-                    "data": { "type": "object", "description": "Upstream response body." }
+                    "example": { "type": "object", "description": "Upstream response body example." }
                   },
                   "additionalProperties": { type: "object" }
                 }
