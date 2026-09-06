@@ -90,6 +90,57 @@ router.get("/", async (req, res) => {
           ],
         },
         {
+          name: "MAMMBA Utilities",
+          email: "info@mammbaent.com",
+          wallet: "0xD4B508FBA121a7A8D3211e54e15bE967B457d6F9",
+          endpoints: [
+            {
+              slug: "qr-code",
+              name: "QR Code Generator",
+              description: "Generate a QR code image from any text or URL. Returns PNG.",
+              category: "media",
+              tags: ["qr", "image", "encoding", "mobile"],
+              upstreamUrl: "https://api.qrserver.com/v1/create-qr-code/",
+              queryParameters: ["data", "size", "color", "bgcolor", "format"],
+              method: "GET",
+              priceAtomic: 2000,
+            },
+            {
+              slug: "url-metadata",
+              name: "URL Metadata Extractor",
+              description: "Extract OpenGraph/title/description/image from any URL. Returns structured JSON.",
+              category: "data",
+              tags: ["metadata", "url", "og", "scraping", "content"],
+              upstreamUrl: "https://api.microlink.io/?url=",
+              queryParameters: ["url"],
+              method: "GET",
+              priceAtomic: 3000,
+            },
+            {
+              slug: "mock-user",
+              name: "Mock User Generator",
+              description: "Generate realistic fake user profiles — name, email, address, phone, avatar. Great for testing.",
+              category: "data",
+              tags: ["fake", "mock", "user", "testing", "demo"],
+              upstreamUrl: "https://randomuser.me/api/",
+              queryParameters: ["nat", "gender", "seed"],
+              method: "GET",
+              priceAtomic: 2000,
+            },
+            {
+              slug: "timezone",
+              name: "Timezone Lookup",
+              description: "Look up timezone by area/city name. Returns timezone name, UTC offset, current time.",
+              category: "data",
+              tags: ["time", "timezone", "date", "schedule"],
+              upstreamUrl: "https://timeapi.io/api/timezone/",
+              queryParameters: ["area"],
+              method: "GET",
+              priceAtomic: 1000,
+            },
+          ],
+        },
+        {
           name: "WeatherAPI Pro",
           email: "weather@demo.io",
           wallet: "0x1111111111111111111111111111111111111111",
@@ -199,7 +250,8 @@ router.get("/", async (req, res) => {
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'active')`,
             [provider.id, ep.slug, ep.name, ep.description, ep.category,
              ep.tags, ep.upstreamUrl, ep.method, ep.priceAtomic,
-             null /* upstream_auth_header */, JSON.stringify(ep.queryParameters) /* query_parameters (JSONB) */, null /* request_body_schema */, '{}' /* response_schema */]
+             null /* upstream_auth_header */, JSON.stringify(ep.queryParameters) /* query_parameters (JSONB) */, null /* request_body_schema */, '{}' /* response_schema */,
+             ep.tags.map(t => String(t)) /* tags is TEXT[] — pass as JS array, pg formats it */]
           );
           console.log(`    · Endpoint: ${ep.name} → /proxy/${ep.slug} (${ep.priceAtomic/1e6} USDC)`);
         }
