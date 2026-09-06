@@ -10,7 +10,7 @@ import http from "http";
 
 const FACILITATOR_URL = process.env.FACILITATOR_URL || "https://x402.xyz/facilitator";
 const NETWORK         = process.env.NETWORK          || "eip155:8453";
-const USDC_ASSET      = process.env.USDC_ASSET        || "0xD4B508FBA121a7A8D3211e54e15bE967B457d6F9";
+const USDC_ASSET      = process.env.USDC_ASSET        || "0x06c51D4732E14E0fACF9d6E6eE8c2755C098Aa35";
 const SERVER_URL      = (process.env.SERVER_URL || "http://localhost:3000").replace(/\/+$/, "");
 const MAX_TIMEOUT_SEC = parseInt(process.env.MAX_TIMEOUT_SECONDS || "60", 10);
 const IS_DEV          = process.env.NODE_ENV !== "production";
