@@ -83,12 +83,21 @@ router.get("/endpoints/:slug", async (req, res) => {
       provider:     endpoint.provider_name,
       proxyUrl:     `${process.env.SERVER_URL}/proxy/${endpoint.slug}`,
       x402: {
-        scheme:            "exact",
-        network:           process.env.NETWORK,
-        asset:             process.env.USDC_ASSET,
-        amount:            String(endpoint.price_atomic),
-        payTo:             process.env.PLATFORM_WALLET,
-        maxTimeoutSeconds: 60,
+        version2: {
+          scheme:            "exact",
+          network:           process.env.NETWORK,
+          asset:             process.env.USDC_ASSET,
+          amount:            String(endpoint.price_atomic),
+          payTo:             process.env.PLATFORM_WALLET,
+          maxTimeoutSeconds: 60,
+        },
+        version1: {
+          scheme:      "exact",
+          network:     process.env.NETWORK,
+          asset:       process.env.USDC_ASSET,
+          amount:      String(endpoint.price_atomic),
+          payTo:       process.env.PLATFORM_WALLET,
+        },
       },
       recentActivity: recentTxs.map((t) => ({
         payerMasked: t.payer_address.slice(0, 6) + "..." + t.payer_address.slice(-4),

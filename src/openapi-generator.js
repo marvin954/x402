@@ -62,7 +62,10 @@ export async function generateOpenAPISpec() {
         security: [{ x402: [] }],
         "x-payment-info": {
           price: { mode: "fixed", currency: "USD", amount: priceUsd },
-          protocols: [{ x402: { network: NETWORK, asset: USDC_ASSET, payTo: PAY_TO, maxTimeoutSeconds: 60 } }],
+          protocols: [
+            { x402: { network: NETWORK, asset: USDC_ASSET, payTo: PAY_TO, maxTimeoutSeconds: 60 } },
+            { x402v1: { network: NETWORK, asset: USDC_ASSET, payTo: PAY_TO } },
+          ],
         },
         "x402": {
           accepts: [
@@ -117,14 +120,16 @@ export async function generateOpenAPISpec() {
             }
           },
           "402": {
-            description: "Payment Required — include X-Payment header",
+            description: "Payment Required — include X-Payment (v1) or PAYMENT-SIGNATURE (v2) header",
             headers: {
               "PAYMENT-REQUIRED": {
                 description: "Base64-encoded x402 v2 payment requirements",
-                schema: {
-                  type: "string"
-                }
-              }
+                schema: { type: "string" }
+              },
+              "X-PAYMENT-REQUIRED": {
+                description: "Base64-encoded x402 v1 payment requirements (legacy agents)",
+                schema: { type: "string" }
+              },
             },
             content: {
               "application/json": {
@@ -987,7 +992,13 @@ export async function generateOpenAPISpec() {
           type: "http",
           scheme: "bearer",
           bearerFormat: "x402-v2",
-          description: "x402 v2 payment required"
+          description: "x402 v2 payment required (PAYMENT-SIGNATURE header)"
+        },
+        x402v1: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "x402-v1",
+          description: "x402 v1 payment required (X-PAYMENT header, legacy)"
         }
       },
       schemas: {
@@ -997,13 +1008,14 @@ export async function generateOpenAPISpec() {
             "x402Version",
             "error",
             "resource",
-            "accepts"
+            "accepts",
+            "extensions"
           ],
           properties: {
             x402Version: {
               type: "integer",
-              enum: [2],
-              description: "x402 protocol version"
+              enum: [1, 2],
+              description: "x402 protocol version (1 = legacy X-PAYMENT, 2 = PAYMENT-SIGNATURE)"
             },
             error: {
               type: "string",
@@ -1135,12 +1147,13 @@ export async function generateOpenAPISpec() {
         }
       }
     },
-    "x-x402": { 
-      version: 2, 
-      network: NETWORK, 
-      asset: USDC_ASSET, 
-      payTo: PAY_TO, 
-      facilitator: FACILITATOR_URL 
+    "x-x402": {
+      versions: [1, 2],
+      defaultVersion: 2,
+      network: NETWORK,
+      asset: USDC_ASSET,
+      payTo: PAY_TO,
+      facilitator: FACILITATOR_URL
     }
   };
 }

@@ -1,9 +1,12 @@
 /**
  * x402 Payment Middleware
  *
- * Handles the full x402 v2 flow:
- *   1. No X-Payment header  → 402 with payment requirements
- *   2. X-Payment present    → verify with facilitator → settle → attach to req
+ * Handles both x402 v1 (X-PAYMENT / X-PAYMENT-RESPONSE) and v2
+ * (PAYMENT-SIGNATURE / PAYMENT-RESPONSE / PAYMENT-REQUIRED) flows.
+ *
+ *   1. No payment header  → 402 with payment requirements (both header names)
+ *   2. Payment header present → verify with facilitator → settle → attach to req
+ *      (accepts either X-PAYMENT for v1 agents or PAYMENT-SIGNATURE for v2 agents)
  */
 import https from "https";
 import http from "http";
@@ -18,7 +21,7 @@ const IS_DEV          = process.env.NODE_ENV !== "production";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function buildPaymentRequired(slug, name, description, priceAtomic) {
-  return {
+  const base = {
     x402Version: 2,
     error: "Payment required to access this resource",
     resource: {
@@ -73,12 +76,25 @@ function buildPaymentRequired(slug, name, description, priceAtomic) {
           },
         },
       },
+      // x402scan / v1 agent compatibility: also expose a v1-style payment info block
+      x402v1: {
+        scheme: "exact",
+        network: NETWORK,
+        amount: String(priceAtomic),
+        asset: USDC_ASSET,
+        payTo: process.env.PLATFORM_WALLET,
+      },
     },
   };
+  return base;
 }
 
 function respondPaymentRequired(res, requirements) {
-  res.setHeader("PAYMENT-REQUIRED", Buffer.from(JSON.stringify(requirements)).toString("base64"));
+  const encoded = Buffer.from(JSON.stringify(requirements)).toString("base64");
+  // v2 headers (standard)
+  res.setHeader("PAYMENT-REQUIRED", encoded);
+  // v1 compatibility headers (legacy agents)
+  res.setHeader("X-PAYMENT-REQUIRED", encoded);
   return res.status(402).json(requirements);
 }
 
@@ -176,7 +192,8 @@ export function requirePayment(endpoint) {
   };
 
   return async (req, res, next) => {
-    const rawHeader = req.headers["x-payment"];
+    // Accept either the v1 header (X-PAYMENT) or the v2 header (PAYMENT-SIGNATURE)
+    const rawHeader = req.headers["x-payment"] || req.headers["payment-signature"];
 
     // ── Step 1: No header → return 402 ───────────────────────────────────────
     if (!rawHeader) {
@@ -240,10 +257,10 @@ export function requirePayment(endpoint) {
       providerCut,
     };
 
-    // Return the x402 v2 settlement receipt and keep the legacy header for compatibility.
+    // Return the x402 v2 settlement receipt and keep the legacy v1 header for compatibility.
     const paymentResponse = Buffer.from(JSON.stringify(settlement.data)).toString("base64");
     res.setHeader("PAYMENT-RESPONSE", paymentResponse);
-    res.setHeader("X-Payment-Response", paymentResponse);
+    res.setHeader("X-PAYMENT-RESPONSE", paymentResponse);
 
     next();
   };

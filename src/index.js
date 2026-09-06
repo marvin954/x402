@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors({
   origin: "*",
-  exposedHeaders: ["X-Payment-Response", "X-Request-Id"],
+  exposedHeaders: ["X-PAYMENT-RESPONSE", "X-PAYMENT-REQUIRED", "X-Request-Id"],
 }));
 
 app.use(express.json({ limit: "2mb" }));
@@ -151,7 +151,7 @@ app.get("/", (req, res) => {
     </div>
     <div class="card">
       <h3>For AI Agents</h3>
-      <p>Browse <a href="/marketplace/endpoints" style="color:#818cf8">/marketplace/endpoints</a>, send an X-Payment header with your USDC authorization, and access any listed API instantly.</p>
+      <p>Browse <a href="/marketplace/endpoints" style="color:#818cf8">/marketplace/endpoints</a>. v2 agents send a <code>PAYMENT-SIGNATURE</code> header; v1 agents send <code>X-PAYMENT</code>. Access any listed API instantly.</p>
     </div>
     <div class="card">
       <h3>Revenue Split</h3>
@@ -173,8 +173,8 @@ app.get("/", (req, res) => {
     <tr><td><span class="method post">POST</span></td><td class="highlight">/api/providers/me/endpoints</td><td>X-API-Key</td><td>Register a new paid endpoint</td></tr>
     <tr><td><span class="method get">GET</span></td><td class="highlight">/api/providers/me/analytics</td><td>X-API-Key</td><td>Time-series calls + top endpoints</td></tr>
     <tr><td>Proxy (paid)</td><td></td><td></td><td></td></tr>
-    <tr><td><span class="method get">GET</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment</td><td>Call any listed GET endpoint</td></tr>
-    <tr><td><span class="method post">POST</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment</td><td>Call any listed POST endpoint</td></tr>
+    <tr><td><span class="method get">GET</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed GET endpoint</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed POST endpoint</td></tr>
     <tr><td>Admin</td><td></td><td></td><td></td></tr>
     <tr><td><span class="method get">GET</span></td><td class="highlight">/admin/stats</td><td>X-Admin-Key</td><td>Full platform revenue stats</td></tr>
     <tr><td><span class="method get">GET</span></td><td class="highlight">/admin/payouts/pending</td><td>X-Admin-Key</td><td>Providers owed money</td></tr>
@@ -190,6 +190,7 @@ app.use("/api/providers",   providersRouter);
 app.use("/marketplace",     marketplaceRouter);
 app.use("/proxy",           marketplaceRouter);   // /proxy/:slug lives in marketplace router
 app.use("/admin",           adminRouter);
+app.use("/trading", tradingRouter);     // Trading API for arbitrage agents
 app.use("/debug", debugRouter);         // Debug routes
 // app.use("/migrate", migrateRouter);     // Migration route (protected by token)
 app.use("/seed", seedRouter);           // Seed route (protected by token)
