@@ -37,8 +37,8 @@ import { endpoints, providers, admin, transactions } from "./db/queries.js";
 
 export async function generateOpenAPISpec() {
   const SERVER_URL = process.env.SERVER_URL || "http://localhost:3000";
-  const NETWORK = process.env.NETWORK || "eip155:84532";
-  const USDC_ASSET = process.env.USDC_ASSET || "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+  const NETWORK = process.env.NETWORK || "eip155:8453";
+  const USDC_ASSET = process.env.USDC_ASSET || "0xD4B508FBA121a7A8D3211e54e15bE967B457d6F9";
   const PAY_TO = process.env.PLATFORM_WALLET || "";
   const FACILITATOR_URL = process.env.FACILITATOR_URL || "https://x402.xyz/facilitator";
 
