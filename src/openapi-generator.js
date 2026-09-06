@@ -1,28 +1,24 @@
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
 // Build a fallback request body schema when the endpoint has no stored schema.
-// Produces a generic object with a dummy property so x402scan does not flag
-// "Input Schema Missing" (empty properties: {} is still treated as missing).
+// Uses additionalProperties so the schema is non-empty — an empty properties
+// object is treated as "missing" by discovery tooling.
 function buildFallbackRequestBody(ep) {
   return {
     type: "object",
     description: "Optional JSON payload forwarded to the upstream service.",
-    properties: {
-      _body: { type: "object", description: "Request body passed to upstream (optional)." },
-    },
+    additionalProperties: { type: "object" },
   };
 }
 
 // Build a fallback response schema when the endpoint has no stored schema.
-// Produces a generic object with a dummy property so x402scan does not flag
-// "Output Schema Missing".
+// Uses additionalProperties so the schema is non-empty — an empty properties
+// object is treated as "missing" by discovery tooling.
 function buildFallbackResponseSchema(ep) {
   return {
     type: "object",
     description: "Upstream provider response.",
-    properties: {
-      data: { type: "object", description: "Upstream response body." },
-    },
+    additionalProperties: { type: "object" },
   };
 }
 
@@ -86,16 +82,12 @@ export async function generateOpenAPISpec() {
                 "input": {
                   "type": "object",
                   "description": "Request body forwarded to upstream (optional).",
-                  "properties": {
-                    "_body": { "type": "object", "description": "Request body passed to upstream." }
-                  }
+                  "additionalProperties": { type: "object" }
                 },
                 "output": {
                   "type": "object",
                   "description": "Upstream provider response body.",
-                  "properties": {
-                    "data": { "type": "object", "description": "Upstream response body." }
-                  }
+                  "additionalProperties": { type: "object" }
                 }
               }
             }
