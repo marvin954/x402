@@ -40,11 +40,34 @@ app.use((req, res, next) => {
 });
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-// Serve favicon.ico
+// Serve favicon.ico / favicon.png / favicon.svg (discovery audit wants these)
+const FAVICON_PNG =
+  "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlz" +
+  "AAAAbwAAALsBIgSsdQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAFCSURB" +
+  "VDiNjZMxDsIwDEV/on/dBBcUNzcHEEBwO+BDc0FBRby7XYNsYXVQVFS0YFHQAtJDc0FBN5aCNiA/" +
+  "tLWyzbatzZqZ7u5Rs6Xd6dzPvPfOfOd77rnPOXAO6wC+AhRQBvwEakABvwKPAf8Bd2PM7W+7+4F/" +
+  "AFr2Br2S7tkBfMAX4Of/PgHcvQZen8ZePwV0AP7jv/fp81dfv3H3LoFGvP7NzEINfwnc/ysBYv8d" +
+  "PqLP3wL9KrBL7gNeF5GLZRE7b1TA/xrYws4AXwN8/v8PABb+DcAvAb9y3inAAfCLfPW3+HB4eLN7" +
+  "m6e32w9zgKsBpwMfAX4ETgNfAFPA/wOwrOFVUgI1+AAAAABJRU5ErkJggg==";
+const FAVICON_PNG_BUFFER = Buffer.from(FAVICON_PNG, "base64");
+
 app.get("/favicon.ico", (req, res) => {
-  const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="24" font-size="24" fill="%23818cf8">M</text></svg>`;
+  res.setHeader("Content-Type", "image/png");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(FAVICON_PNG_BUFFER);
+});
+
+app.get("/favicon.png", (req, res) => {
+  res.setHeader("Content-Type", "image/png");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(FAVICON_PNG_BUFFER);
+});
+
+app.get("/favicon.svg", (req, res) => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#1e1b4b"/><text x="16" y="24" font-family="system-ui" font-size="22" font-weight="700" fill="#818cf8" text-anchor="middle">M</text></svg>`;
   res.setHeader("Content-Type", "image/svg+xml");
-  res.send(svgIcon);
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(svg);
 });
 
 // ─── OpenAPI Discovery (required for x402scan) ────────────────────────────────
