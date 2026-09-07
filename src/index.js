@@ -141,7 +141,7 @@ app.get("/", (req, res) => {
 </head>
 <body>
 <div class="hero">
-  <div class="badge"><span class="live"></span> x402 Protocol v2 · Base Network</div>
+  <div class="badge"><span class="live"></span> x402 Protocol · Base Network</div>
   <h1>MAMMBA x402 Marketplace</h1>
   <p class="sub">The multi-tenant API marketplace where developers publish paid endpoints and AI agents pay per request with USDC.</p>
   <div class="grid">
@@ -190,7 +190,6 @@ app.use("/api/providers",   providersRouter);
 app.use("/marketplace",     marketplaceRouter);
 app.use("/proxy",           marketplaceRouter);   // /proxy/:slug lives in marketplace router
 app.use("/admin",           adminRouter);
-app.use("/trading", tradingRouter);     // Trading API for arbitrage agents
 app.use("/debug", debugRouter);         // Debug routes
 // app.use("/migrate", migrateRouter);     // Migration route (protected by token)
 app.use("/seed", seedRouter);           // Seed route (protected by token)
