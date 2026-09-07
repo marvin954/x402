@@ -13,6 +13,7 @@ import seedRouter        from "./routes/seed.js";
 import debugRouter       from "./routes/debug.js";
 import intelligenceRouter from "./routes/intelligence.js";
 import businessRouter   from "./routes/business-intelligence.js";
+import aiGatewayRouter  from "./routes/ai-gateway.js";
 import { endpoints } from "./db/queries.js";
 
 const app  = express();
@@ -176,6 +177,11 @@ app.get("/", (req, res) => {
     <tr><td><span class="method get">GET</span></td><td class="highlight">/api/providers/me/analytics</td><td>X-API-Key</td><td>Time-series calls + top endpoints</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/website/intelligence</td><td>—</td><td>Free website intelligence scraper — title, description, image, favicon, social links, contacts, technologies, content summary</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/business/intelligence</td><td>$0.25 (X-Payment / PAYMENT-SIGNATURE)</td><td>Full business intelligence — company info, website analysis, contacts, technologies, social profiles, AI lead score (0-100)</td></tr>
+    <tr><td>AI Gateway (paid)</td><td></td><td></td><td></td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/chat</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Chat completions — GPT-4o, Claude, Ollama (OpenAI-compatible API)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/embeddings</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Text embeddings — vector search, semantic similarity</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/image</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Image generation — DALL-E 3 and other image models</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/transcribe</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Audio transcription — Whisper and other speech-to-text models</td></tr>
     <tr><td>Proxy (paid)</td><td></td><td></td><td></td></tr>
     <tr><td><span class="method get">GET</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed GET endpoint</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed POST endpoint</td></tr>
@@ -197,6 +203,7 @@ app.use("/admin",           adminRouter);
 app.use("/debug", debugRouter);         // Debug routes
 app.use("/v1", intelligenceRouter);    // POST /v1/website/intelligence
 app.use("/v1", businessRouter);        // POST /v1/business/intelligence
+app.use("/v1", aiGatewayRouter);       // POST /v1/chat, /v1/embeddings, /v1/image, /v1/transcribe
 // app.use("/migrate", migrateRouter);     // Migration route (protected by token)
 app.use("/seed", seedRouter);           // Seed route (protected by token)
 

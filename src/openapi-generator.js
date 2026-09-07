@@ -415,6 +415,242 @@ export async function generateOpenAPISpec() {
     }
   };
 
+  // POST /v1/chat — AI chat completions (paid)
+  paths["/v1/chat"] = {
+    post: {
+      summary: "AI Chat Completions",
+      description: "Send a chat message to an AI model and get a text response. Supports OpenAI, Anthropic, and Ollama backends.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["messages"],
+              properties: {
+                model:       { type: "string", example: "gpt-4o-mini" },
+                messages: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    required: ["role", "content"],
+                    properties: {
+                      role:    { type: "string", enum: ["system","user","assistant","tool"], example: "user" },
+                      content: { type: "string", example: "Hello! What can you help me with?" }
+                    }
+                  }
+                },
+                max_tokens:  { type: "integer", example: 2048 },
+                temperature: { type: "number", example: 0.7 },
+                stop:        { type: "array", items: { type: "string" } }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Chat completion response (OpenAI-compatible format)",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  id:       { type: "string" },
+                  object:   { type: "string", example: "chat.completion" },
+                  created:  { type: "integer" },
+                  model:    { type: "string" },
+                  choices:  { type: "array" },
+                  usage:    { type: "object" },
+                  _meta: {
+                    type: "object",
+                    properties: {
+                      provider:       { type: "string" },
+                      model:          { type: "string" },
+                      responseTimeMs: { type: "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": { description: "Invalid request — missing messages array" },
+        "502": { description: "AI provider error — check provider configuration" }
+      }
+    }
+  };
+
+  // POST /v1/embeddings — Text embeddings (paid)
+  paths["/v1/embeddings"] = {
+    post: {
+      summary: "Text Embeddings",
+      description: "Convert text into vector embeddings for semantic search, similarity, and clustering.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["input"],
+              properties: {
+                model:        { type: "string", example: "text-embedding-3-small" },
+                input: {
+                  oneOf: [
+                    { type: "string", example: "The MAMMBA x402 marketplace enables paid API access for AI agents." },
+                    { type: "array", items: { type: "string" } }
+                  ]
+                },
+                encoding_format: { type: "string", enum: ["float","base64"], example: "float" }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Embedding vectors (OpenAI-compatible format)",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  object: { type: "string", example: "list" },
+                  model:  { type: "string" },
+                  data:   { type: "array", items: { type: "object" } },
+                  usage:  { type: "object" },
+                  _meta: {
+                    type: "object",
+                    properties: {
+                      provider:       { type: "string" },
+                      model:          { type: "string" },
+                      responseTimeMs: { type: "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": { description: "Invalid request — missing input" },
+        "502": { description: "AI provider error — check provider configuration" }
+      }
+    }
+  };
+
+  // POST /v1/image — Image generation (paid)
+  paths["/v1/image"] = {
+    post: {
+      summary: "Image Generation",
+      description: "Generate images from text prompts using DALL-E 3 or other image models.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["prompt"],
+              properties: {
+                model:          { type: "string", example: "dall-e-3" },
+                prompt:         { type: "string", example: "A futuristic cityscape with flying cars at sunset" },
+                n:              { type: "integer", minimum: 1, maximum: 10, example: 1 },
+                size: {
+                  type: "string",
+                  enum: ["256x256","512x512","1024x1024","1792x1024","1024x1792"],
+                  example: "1024x1024"
+                },
+                response_format: { type: "string", enum: ["url","b64_json"], example: "url" }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Generated image(s) — URL or base64 data",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  created: { type: "integer" },
+                  data:    { type: "array", items: { type: "object" } },
+                  _meta: {
+                    type: "object",
+                    properties: {
+                      provider:       { type: "string" },
+                      model:          { type: "string" },
+                      responseTimeMs: { type: "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": { description: "Invalid request — missing prompt" },
+        "502": { description: "AI provider error — check provider configuration" }
+      }
+    }
+  };
+
+  // POST /v1/transcribe — Audio transcription (paid)
+  paths["/v1/transcribe"] = {
+    post: {
+      summary: "Audio Transcription",
+      description: "Transcribe audio files to text using Whisper or other transcription models. Accepts Buffer, Uint8Array, or data URI as the file field.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["file"],
+              properties: {
+                file:         { type: "string", description: "Buffer, Uint8Array, or data URI (data:audio/...;base64,...)" },
+                model:        { type: "string", example: "whisper-1" },
+                language:     { type: "string", example: "en" },
+                prompt:       { type: "string", description: "Optional context to guide the transcription" }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Transcription result",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  text:    { type: "string" },
+                  language:{ type: "string" },
+                  duration_ms: { type: "integer" },
+                  segments: { type: "array" },
+                  _meta: {
+                    type: "object",
+                    properties: {
+                      provider:       { type: "string" },
+                      model:          { type: "string" },
+                      responseTimeMs: { type: "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": { description: "Invalid request — missing file" },
+        "502": { description: "AI provider error — check provider configuration" }
+      }
+    }
+  };
+
   // Provider endpoints (require X-API-Key)
   paths["/api/providers/register"] = {
     post: {
