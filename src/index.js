@@ -14,6 +14,7 @@ import debugRouter       from "./routes/debug.js";
 import intelligenceRouter from "./routes/intelligence.js";
 import businessRouter   from "./routes/business-intelligence.js";
 import aiGatewayRouter  from "./routes/ai-gateway.js";
+import cryptoRouter     from "./routes/crypto-intelligence.js";
 import { endpoints } from "./db/queries.js";
 
 const app  = express();
@@ -182,6 +183,13 @@ app.get("/", (req, res) => {
     <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/embeddings</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Text embeddings — vector search, semantic similarity</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/image</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Image generation — DALL-E 3 and other image models</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/transcribe</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Audio transcription — Whisper and other speech-to-text models</td></tr>
+    <tr><td>Crypto Intelligence (paid)</td><td></td><td></td><td></td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/token-analysis</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Token fundamentals, price, market cap, volume, community links</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/wallet-analysis</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Wallet holdings, transactions, PnL estimate, smart-money labels</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/smart-money</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Top-performing traders, copy-trading signals, PnL + win rate</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/newpairs</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Freshly listed tokens across DEXs with liquidity + market cap filters</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/token-security</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Honeypot scan, mint/freeze authority, liquidity lock, holder concentration</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/market-sentiment</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Fear &amp; greed index, trending tickers, social sentiment, top gainers/losers</td></tr>
     <tr><td>Proxy (paid)</td><td></td><td></td><td></td></tr>
     <tr><td><span class="method get">GET</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed GET endpoint</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed POST endpoint</td></tr>
@@ -204,6 +212,7 @@ app.use("/debug", debugRouter);         // Debug routes
 app.use("/v1", intelligenceRouter);    // POST /v1/website/intelligence
 app.use("/v1", businessRouter);        // POST /v1/business/intelligence
 app.use("/v1", aiGatewayRouter);       // POST /v1/chat, /v1/embeddings, /v1/image, /v1/transcribe
+app.use("/v1", cryptoRouter);          // POST /v1/token-analysis, /v1/wallet-analysis, /v1/smart-money, /v1/newpairs, /v1/token-security, /v1/market-sentiment
 // app.use("/migrate", migrateRouter);     // Migration route (protected by token)
 app.use("/seed", seedRouter);           // Seed route (protected by token)
 

@@ -651,6 +651,201 @@ export async function generateOpenAPISpec() {
     }
   };
 
+  // POST /v1/token-analysis — Token intelligence (paid)
+  paths["/v1/token-analysis"] = {
+    post: {
+      summary: "Token Analysis",
+      description: "Get token fundamentals, price, market cap, volume, holders, and community links from CoinGecko or mock data.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["token"],
+              properties: {
+                token: { type: "string", example: "ethereum" },
+                chain: { type: "string", example: "ethereum" }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Token analysis result",
+          content: { "application/json": { schema: { type: "object" } } }
+        },
+        "400": { description: "Invalid request — missing token" },
+        "404": { description: "Token not found" },
+        "502": { description: "Market data provider error" }
+      }
+    }
+  };
+
+  // POST /v1/wallet-analysis — Wallet intelligence (paid)
+  paths["/v1/wallet-analysis"] = {
+    post: {
+      summary: "Wallet Analysis",
+      description: "Analyze a crypto wallet: holdings, transactions, PnL estimate, and smart-money labels.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["wallet"],
+              properties: {
+                wallet: { type: "string", example: "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD38" },
+                chain: { type: "string", example: "ethereum" }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Wallet analysis result",
+          content: { "application/json": { schema: { type: "object" } } }
+        },
+        "400": { description: "Invalid request — missing or malformed wallet" },
+        "404": { description: "Wallet not found or no data" },
+        "502": { description: "Chain data provider error" }
+      }
+    }
+  };
+
+  // POST /v1/smart-money — Smart money traders (paid)
+  paths["/v1/smart-money"] = {
+    post: {
+      summary: "Smart Money",
+      description: "Find top-performing traders, copy-trading signals, PnL, and win rates across chains.",
+      security: [],
+      requestBody: {
+        required: false,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                chain:  { type: "string", example: "ethereum" },
+                limit:  { type: "integer", minimum: 1, maximum: 50, default: 10 },
+                minPnl: { type: "number", default: 0 }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Smart money traders list",
+          content: { "application/json": { schema: { type: "object" } } }
+        },
+        "404": { description: "No smart money data available" },
+        "502": { description: "Chain data provider error" }
+      }
+    }
+  };
+
+  // POST /v1/newpairs — New token pairs (paid)
+  paths["/v1/newpairs"] = {
+    post: {
+      summary: "New Pairs",
+      description: "Discover freshly listed tokens across DEXs with filters for liquidity and market cap.",
+      security: [],
+      requestBody: {
+        required: false,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                chain:         { type: "string", example: "ethereum" },
+                limit:         { type: "integer", minimum: 1, maximum: 100, default: 20 },
+                minLiquidity:  { type: "number", minimum: 0, default: 10000 },
+                minMarketCap:  { type: "number", minimum: 0, default: 50000 }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "New token pairs list",
+          content: { "application/json": { schema: { type: "object" } } }
+        },
+        "404": { description: "No new pairs found matching filters" },
+        "502": { description: "Market data provider error" }
+      }
+    }
+  };
+
+  // POST /v1/token-security — Token security scan (paid)
+  paths["/v1/token-security"] = {
+    post: {
+      summary: "Token Security",
+      description: "Scan a token for honeypot risk, mint/freeze authority, liquidity lock, and holder concentration.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["token"],
+              properties: {
+                token: { type: "string", example: "ethereum" },
+                chain: { type: "string", example: "ethereum" }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Security scan result",
+          content: { "application/json": { schema: { type: "object" } } }
+        },
+        "400": { description: "Invalid request — missing token" },
+        "404": { description: "Token not found" },
+        "502": { description: "Security scan provider error" }
+      }
+    }
+  };
+
+  // POST /v1/market-sentiment — Market sentiment (paid)
+  paths["/v1/market-sentiment"] = {
+    post: {
+      summary: "Market Sentiment",
+      description: "Fear & greed index, trending tickers, social sentiment, top gainers and losers.",
+      security: [],
+      requestBody: {
+        required: false,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                symbol: { type: "string", example: "BTC" },
+                chains: { type: "array", items: { type: "string" } }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Market sentiment result",
+          content: { "application/json": { schema: { type: "object" } } }
+        },
+        "404": { description: "Sentiment data not found" },
+        "502": { description: "Sentiment provider error" }
+      }
+    }
+  };
+
   // Provider endpoints (require X-API-Key)
   paths["/api/providers/register"] = {
     post: {
