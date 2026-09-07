@@ -42,7 +42,13 @@ router.post("/chat", async (req, res) => {
       }
     }
 
-    const request = pick({ model, messages, max_tokens, temperature, stop }, ["model", "messages", "max_tokens", "temperature", "stop"]);
+    const request = {
+      model:      model || undefined,
+      messages:   messages,
+      max_tokens: max_tokens !== undefined ? max_tokens : undefined,
+      temperature: temperature !== undefined ? temperature : undefined,
+      stop:       stop || undefined,
+    };
 
     const start = Date.now();
     let result;
@@ -101,7 +107,11 @@ router.post("/embeddings", async (req, res) => {
       return res.status(400).json({ error: "Too many inputs — max 2048 per request" });
     }
 
-    const request = pick({ model, input, encoding_format }, ["model", "input", "encoding_format"]);
+    const request = {
+      model:      model || undefined,
+      input:      input,
+      encoding_format: encoding_format || undefined,
+    };
 
     const start = Date.now();
     let result;
@@ -152,7 +162,13 @@ router.post("/image", async (req, res) => {
       return res.status(400).json({ error: "Prompt too long — max 4000 characters" });
     }
 
-    const request = pick({ model, prompt, n, size, response_format }, ["model", "prompt", "n", "size", "response_format"]);
+    const request = {
+      model:          model || undefined,
+      prompt:         prompt,
+      n:              n !== undefined ? n : undefined,
+      size:           size || undefined,
+      response_format: response_format || undefined,
+    };
 
     const start = Date.now();
     let result;
@@ -209,8 +225,13 @@ router.post("/transcribe", async (req, res) => {
       return res.status(400).json({ error: '"file" must be a Buffer, Uint8Array, or data URI string' });
     }
 
-    const request = pick({ file: processedFile, model, language, prompt, mime_type }, ["file", "model", "language", "prompt", "mime_type"]);
-
+    const request = {
+      file:        processedFile,
+      model:       model || undefined,
+      language:    language || undefined,
+      prompt:      prompt || undefined,
+      mime_type:   mime_type || undefined,
+    };
     const start = Date.now();
     let result;
     let error;
