@@ -271,6 +271,61 @@ export async function generateOpenAPISpec() {
     }
   };
 
+  // POST /v1/website/intelligence — Website intelligence scraper
+  paths["/v1/website/intelligence"] = {
+    post: {
+      summary: "Website Intelligence",
+      description: "Scrape any URL and return structured intelligence: title, description, image, favicon, social_links[], contacts[], technologies[], content_summary.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["url"],
+              properties: {
+                url: { type: "string", format: "uri", example: "https://example.com" }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Website intelligence payload",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  title:           { type: "string", example: "Example Website" },
+                  description:     { type: "string", example: "A short description of the site." },
+                  image:           { type: "string", format: "uri", example: "https://example.com/og.png" },
+                  favicon:         { type: "string", format: "uri", example: "https://example.com/favicon.ico" },
+                  social_links:    { type: "array", items: { type: "object", properties: { platform: { type: "string" }, url: { type: "string", format: "uri" } } } },
+                  contacts:        { type: "array", items: { type: "object", properties: { type: { type: "string", enum: ["email","phone","address","general"] }, value: { type: "string" } } } },
+                  technologies:    { type: "array", items: { type: "string" } },
+                  content_summary: { type: "string" },
+                  _meta: {
+                    type: "object",
+                    properties: {
+                      url:           { type: "string", format: "uri" },
+                      fetchedAt:     { type: "string", format: "date-time" },
+                      responseTimeMs: { type: "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": { description: "Invalid request — missing or malformed URL" },
+        "502": { description: "Upstream scrape failed — target unreachable or blocking" }
+      }
+    }
+  };
+
   // Provider endpoints (require X-API-Key)
   paths["/api/providers/register"] = {
     post: {

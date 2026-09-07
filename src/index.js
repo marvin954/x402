@@ -11,6 +11,7 @@ import marketplaceRouter from "./routes/marketplace.js";
 import adminRouter       from "./routes/admin.js";
 import seedRouter        from "./routes/seed.js";
 import debugRouter       from "./routes/debug.js";
+import intelligenceRouter from "./routes/intelligence.js";
 import { endpoints } from "./db/queries.js";
 
 const app  = express();
@@ -172,6 +173,7 @@ app.get("/", (req, res) => {
     <tr><td><span class="method get">GET</span></td><td class="highlight">/api/providers/me</td><td>X-API-Key</td><td>Dashboard + earnings summary</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/api/providers/me/endpoints</td><td>X-API-Key</td><td>Register a new paid endpoint</td></tr>
     <tr><td><span class="method get">GET</span></td><td class="highlight">/api/providers/me/analytics</td><td>X-API-Key</td><td>Time-series calls + top endpoints</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/website/intelligence</td><td>—</td><td>Free website intelligence scraper — title, description, image, favicon, social links, contacts, technologies, content summary</td></tr>
     <tr><td>Proxy (paid)</td><td></td><td></td><td></td></tr>
     <tr><td><span class="method get">GET</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed GET endpoint</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed POST endpoint</td></tr>
@@ -191,6 +193,7 @@ app.use("/marketplace",     marketplaceRouter);
 app.use("/proxy",           marketplaceRouter);   // /proxy/:slug lives in marketplace router
 app.use("/admin",           adminRouter);
 app.use("/debug", debugRouter);         // Debug routes
+app.use("/v1", intelligenceRouter);    // POST /v1/website/intelligence
 // app.use("/migrate", migrateRouter);     // Migration route (protected by token)
 app.use("/seed", seedRouter);           // Seed route (protected by token)
 
