@@ -116,6 +116,16 @@ router.get("/", async (req, res) => {
               priceAtomic: 100000,
             },
             {
+              slug: "business-intelligence",
+              name: "Business Intelligence",
+              description: "Full business report: company info, website analysis, contact extraction, technology detection, social profiles, and AI lead score (0-100). $0.25 per call.",
+              category: "data",
+              tags: ["intelligence", "business", "lead", "scoring", "contacts", "technology", "enrichment"],
+              upstreamUrl: "/v1/business/intelligence",
+              method: "POST",
+              priceAtomic: 250000,
+            },
+            {
               slug: "mock-user",
               name: "Mock User Generator",
               description: "Generate realistic fake user profiles — name, email, address, phone, avatar. Great for testing.",

@@ -326,6 +326,95 @@ export async function generateOpenAPISpec() {
     }
   };
 
+  // POST /v1/business/intelligence — Full business intelligence + lead score
+  paths["/v1/business/intelligence"] = {
+    post: {
+      summary: "Business Intelligence",
+      description: "Combine website analysis, contact extraction, technology detection, social profiles, and industry inference into a full business report with AI lead score (0-100).",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["url"],
+              properties: {
+                url:        { type: "string", format: "uri", example: "https://acme.com" },
+                businessName: { type: "string", example: "Acme Corporation" }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        "200": {
+          description: "Business intelligence report with lead score",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  business: {
+                    type: "object",
+                    properties: {
+                      name:           { type: "string", example: "Acme Corp" },
+                      website:        { type: "string", format: "uri" },
+                      industry:       { type: "string", example: "saas" },
+                      estimatedSize:  { type: "string", enum: ["solopreneur","small_business","midmarket","enterprise"], example: "small_business" },
+                      location:       { type: "string" },
+                      description:    { type: "string" }
+                    }
+                  },
+                  website: {
+                    type: "object",
+                    properties: {
+                      title:          { type: "string" },
+                      description:    { type: "string" },
+                      image:          { type: "string", format: "uri" },
+                      favicon:        { type: "string", format: "uri" },
+                      social_links:   { type: "array", items: { type: "object", properties: { platform: { type: "string" }, url: { type: "string", format: "uri" } } } },
+                      technologies:   { type: "array", items: { type: "string" } },
+                      content_summary: { type: "string" }
+                    }
+                  },
+                  contacts: {
+                    type: "object",
+                    properties: {
+                      emails:         { type: "array", items: { type: "string" } },
+                      phones:         { type: "array", items: { type: "string" } },
+                      addresses:      { type: "array", items: { type: "string" } },
+                      social_profiles: { type: "array", items: { type: "object", properties: { platform: { type: "string" }, url: { type: "string", format: "uri" } } } }
+                    }
+                  },
+                  leadScore: {
+                    type: "object",
+                    properties: {
+                      score:   { type: "integer", minimum: 0, maximum: 100, example: 72 },
+                      grade:   { type: "string", enum: ["A","B","C","D"], example: "B" },
+                      breakdown: { type: "object" }
+                    }
+                  },
+                  _meta: {
+                    type: "object",
+                    properties: {
+                      url:           { type: "string", format: "uri" },
+                      businessName:  { type: "string", nullable: true },
+                      fetchedAt:     { type: "string", format: "date-time" },
+                      responseTimeMs: { type: "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": { description: "Invalid request — missing or malformed URL" },
+        "502": { description: "Business intelligence generation failed" }
+      }
+    }
+  };
+
   // Provider endpoints (require X-API-Key)
   paths["/api/providers/register"] = {
     post: {
