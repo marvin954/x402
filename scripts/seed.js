@@ -34,7 +34,7 @@ const DEMO_PROVIDERS = [
         name: "Crypto Price Feed",
         description: "Live BTC, ETH, SOL prices via CoinGecko. Sub-cent per call.",
         category: "finance",
-        tags: ["crypto", "prices", "defi", "trading"],
+        tags: ["crypto", "prices", "defi"],
         upstreamUrl: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd",
         method: "GET",
         priceAtomic: 3000,
