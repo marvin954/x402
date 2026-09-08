@@ -11,7 +11,7 @@
   "headers": [{ "source": "/(.*)", "headers": [
     { "key": "Access-Control-Allow-Origin", "value": "*" },
     { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, PATCH, DELETE, OPTIONS" },
-    { "key": "Access-Control-Allow-Headers", "value": "Content-Type, X-Payment, X-PAYMENT, X-PAYMENT-SIGNATURE, PAYMENT-SIGNATURE, X-API-Key, X-Admin-Key, Authorization" },
-    { "key": "Access-Control-Expose-Headers", "value": "X-Payment-Response, X-PAYMENT-RESPONSE, X-PAYMENT-REQUIRED, X-Request-Id" }
+    { "key": "Access-Control-Allow-Headers", "value": "Content-Type, X-Payment, X-PAYMENT, X-PAYMENT-SIGNATURE, PAYMENT-SIGNATURE, X-PAYMENT-RESPONSE, PAYMENT-RESPONSE, X-PAYMENT-REQUIRED, PAYMENT-REQUIRED, X-API-Key, X-Admin-Key, Authorization, X-request-Id" },
+    { "key": "Access-Control-Expose-Headers", "value": "X-Payment-Response, X-PAYMENT-RESPONSE, X-PAYMENT-REQUIRED, PAYMENT-REQUIRED, X-PAYMENT-SIGNATURE, X-request-Id, PAYMENT-SIGNATURE, PAYMENT-RESPONSE" }
   ]}]
 }
