@@ -15,6 +15,7 @@ import intelligenceRouter from "./routes/intelligence.js";
 import businessRouter   from "./routes/business-intelligence.js";
 import aiGatewayRouter  from "./routes/ai-gateway.js";
 import cryptoRouter     from "./routes/crypto-intelligence.js";
+import workflowsRouter  from "./routes/workflows.js";
 import { endpoints } from "./db/queries.js";
 
 const app  = express();
@@ -190,6 +191,27 @@ app.get("/", (req, res) => {
     <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/newpairs</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Freshly listed tokens across DEXs with liquidity + market cap filters</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/token-security</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Honeypot scan, mint/freeze authority, liquidity lock, holder concentration</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/v1/market-sentiment</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Fear &amp; greed index, trending tickers, social sentiment, top gainers/losers</td></tr>
+    <tr><td>Workflow APIs (paid)</td><td></td><td></td><td></td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/lead-research</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Lead research — find, score, and enrich businesses by industry + location ($2.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/website-audit</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Comprehensive website audit: SEO, CWV, technologies, accessibility, content, conversions ($5.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/sales-prospect</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Sales prospecting — find businesses, analyze, score, generate personalized outreach ($3.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/competitor-analysis</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Competitor analysis — analyze target, identify competitors, compare services &amp; positioning ($5.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/market-research</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Market research — industry demand, competitors, segments, trends, opportunities, risks ($5.00-$25.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/content-factory</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Content factory — hooks, scripts, captions, hashtags, CTAs, posting recommendations ($1.00-$10.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/seo-content</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>SEO content pipeline — keyword research, title, meta, article, FAQ, structured data ($3.00-$15.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/contact-enrichment</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Contact enrichment — company description, industry, services, location, public contacts ($2.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/reputation-check</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Reputation check — public review sentiment, strengths, issues, recommendations ($3.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/proposal-generator</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Proposal generator — executive summary, scope, deliverables, timeline, pricing, terms ($5.00-$25.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/business-blueprint</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Business blueprint — overview, customers, revenue model, competition, startup plan, 90-day action ($5.00-$20.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/document-analysis</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Document intelligence — extract text, summarize, key entities, dates, action items ($3.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/invoice-extract</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Invoice extraction — vendor, invoice #, dates, currency, subtotal, tax, total, line items ($2.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/contract-review</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Contract analysis — parties, obligations, dates, payment terms, clauses, legal questions ($5.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/deep-research</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Deep research — multi-step research plan, multi-source search, evidence synthesis, sources ($5.00-$50.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/due-diligence</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Business due diligence — company research, reputation, news, risks, strengths, verified labels ($5.00-$25.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/social-analysis</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Social media analysis — profile overview, content patterns, topics, engagement indicators ($3.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/candidate-analysis</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Candidate analysis — resume vs job description: skills match, experience, strengths, interview questions ($3.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/workflows/business-email</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Business email sequence — cold outreach, follow-ups, sales sequences, partnership, responses ($1.00-$10.00)</td></tr>
+    <tr><td><span class="method post">POST</span></td><td class="highlight">/api/agent/execute</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>AI agent task executor — classify, plan, execute subtasks with controlled tool registry ($1.00-$25.00+)</td></tr>
     <tr><td>Proxy (paid)</td><td></td><td></td><td></td></tr>
     <tr><td><span class="method get">GET</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed GET endpoint</td></tr>
     <tr><td><span class="method post">POST</span></td><td class="highlight">/proxy/:slug</td><td>X-Payment (v1) / PAYMENT-SIGNATURE (v2)</td><td>Call any listed POST endpoint</td></tr>
@@ -213,6 +235,7 @@ app.use("/v1", intelligenceRouter);    // POST /v1/website/intelligence
 app.use("/v1", businessRouter);        // POST /v1/business/intelligence
 app.use("/v1", aiGatewayRouter);       // POST /v1/chat, /v1/embeddings, /v1/image, /v1/transcribe
 app.use("/v1", cryptoRouter);          // POST /v1/token-analysis, /v1/wallet-analysis, /v1/smart-money, /v1/newpairs, /v1/token-security, /v1/market-sentiment
+app.use("/api/workflows", workflowsRouter); // POST /api/workflows/lead-research + future workflows
 // app.use("/migrate", migrateRouter);     // Migration route (protected by token)
 app.use("/seed", seedRouter);           // Seed route (protected by token)
 
