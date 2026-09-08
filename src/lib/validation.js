@@ -67,15 +67,26 @@ export function validateArray(body, key, opts = {}) {
   return errs;
 }
 
-export function validateUrl(body, key) {
-  const v = body?.[key];
+/** Returns true if value is a valid http/https URL string.
+ *  Supports two call patterns:
+ *    - validateUrl(body, key)    → reads body[key]
+ *    - validateUrl(value)        → value is the pre-resolved string
+ *  Returns [] on success, or [errorMessage] on failure.
+ */
+export function validateUrl(value, key) {
+  let v;
+  if (key !== undefined && typeof value === "object" && value != null && !Array.isArray(value)) {
+    v = value?.[key];
+  } else {
+    v = value;
+  }
   if (v == null) return [];
-  if (typeof v !== "string") return [`"${key}" must be a string`];
+  if (typeof v !== "string") return [`"${key || "value"}" must be a string`];
   try {
     const u = new URL(v);
-    if (!["http:", "https:"].includes(u.protocol)) return [`"${key}" must be http/https`];
+    if (!["http:", "https:"].includes(u.protocol)) return [`"${key || "value"}" must be http/https`];
   } catch {
-    return [`"${key}" is not a valid URL`];
+    return [`"${key || "value"}" is not a valid URL`];
   }
   return [];
 }
@@ -89,7 +100,6 @@ export function validateFile(body, key, opts = {}) {
     return errs;
   }
   if (typeof v === "string" && v.startsWith("data:")) {
-    // parse header
     const comma = v.indexOf(",");
     if (comma < 0) return [`"${key}" is not a valid data URI`];
     const header = v.slice(0, comma);
@@ -97,7 +107,6 @@ export function validateFile(body, key, opts = {}) {
     if (opts.mimeTypes && !opts.mimeTypes.some((m) => mime.startsWith(m))) {
       errs.push(`"${key}" must be one of: ${opts.mimeTypes.join(", ")}`);
     }
-    // estimate size from base64
     const b64 = v.slice(comma + 1);
     const bytes = Math.ceil((b64.length * 3) / 4);
     if (opts.maxSize && bytes > opts.maxSize) errs.push(`"${key}" exceeds ${opts.maxSize} bytes`);
@@ -111,7 +120,6 @@ export function validateFile(body, key, opts = {}) {
 export function validateDocumentFile(body) {
   const v = body?.file;
   if (v == null) {
-    // Also accept text input via document_text or text field
     const text = body?.document_text || body?.text || "";
     if (typeof text === "string" && text.trim().length >= 10) return true;
     return false;
@@ -130,7 +138,6 @@ export function validateDocumentFile(body) {
 export function validateContractFile(body) {
   const v = body?.file;
   if (v == null) {
-    // Also accept text input via contract_text or text field
     const text = body?.contract_text || body?.text || "";
     if (typeof text === "string" && text.trim().length >= 10) return true;
     return false;
@@ -199,6 +206,7 @@ export function validateNonEmptyString(value, opts = {}) {
   if (typeof value !== "string") return false;
   return value.trim().length >= (opts.minLength ?? 1);
 }
+
 export function collect(...validators) {
   const out = [];
   for (const v of validators) {

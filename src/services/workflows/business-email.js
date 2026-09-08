@@ -75,15 +75,16 @@ export async function businessEmail(input, req) {
   const sender_company = input.sender_company;
   const tone_override = input.tone_override || input.tone;
   const pkg = input.package || input.email_package || "medium";
+  const emails_to_generate = input.emails_to_generate || input.email_count || (pkg === "small" ? 1 : pkg === "medium" ? 2 : 4);
   const context = input.key_points ? { specific_observation: input.key_points.join("; ") } : input.context || {};
 
   if (!purpose || typeof purpose !== "string") {
     return { success: false, error: { code: "VALIDATION_ERROR", message: '"email_purpose" is required (e.g. "cold_outreach", "follow_up", "sales_sequence", "partnership", "customer_response", "networking", "thank_you", "breakup_email")' } };
   }
 
-  const validPurposes = Object.keys(EMAIL_PRESETS);
-  if (!validPurposes.includes(purpose)) {
-    return { success: false, error: { code: "VALIDATION_ERROR", message: `"email_purpose" must be one of: ${validPurposes.join(", ")}` } };
+  const VALID_PURPOSES = Object.keys(EMAIL_PRESETS);
+  if (!VALID_PURPOSES.includes(purpose)) {
+    return { success: false, error: { code: "VALIDATION_ERROR", message: `"email_purpose" must be one of: ${VALID_PURPOSES.join(", ")}` } };
   }
 
   const validPackages = ["small", "medium", "large"];
@@ -91,7 +92,7 @@ export async function businessEmail(input, req) {
     return { success: false, error: { code: "VALIDATION_ERROR", message: `"email_package" must be one of: ${validPackages.join(", ")}` } };
   }
 
-  const followUpCount = input.follow_up_count || pkg === "small" ? 0 : pkg === "medium" ? 2 : 4;
+  const followUpCount = input.follow_up_count ?? (pkg === "small" ? 0 : pkg === "medium" ? 2 : 4);
   const includeSubjectLine = input.include_subject_line ?? input.include_subject ?? true;
   const preset = EMAIL_PRESETS[purpose];
 
@@ -131,11 +132,11 @@ export async function businessEmail(input, req) {
   const filledBody = fillTemplate(preset.body);
 
   let variations = null;
-  if (emailsToGenerate > 1) {
+  if (emails_to_generate > 1) {
     try {
       variations = await chatJson([
-        { role: "system", content: "You are an email copywriting expert. Generate " + emailsToGenerate + " variations of the following email. Each variation should be distinct in wording but preserve the same intent, tone (" + (tone_override || preset.tone) + "), and call to action. Return a JSON array of {subject, body, key_points (array of 2-3 bullet points)}. Use the placeholders filled in below. Return ONLY a JSON array." },
-        { role: "user", content: "Original email:\nSubject: " + filledSubject + "\n\nBody:\n" + filledBody + "\n\nGenerate " + emailsToGenerate + " variations." },
+        { role: "system", content: "You are an email copywriting expert. Generate " + emails_to_generate + " variations of the following email. Each variation should be distinct in wording but preserve the same intent, tone (" + (tone_override || preset.tone) + "), and call to action. Return a JSON array of {subject, body, key_points (array of 2-3 bullet points)}. Use the placeholders filled in below. Return ONLY a JSON array." },
+        { role: "user", content: "Original email:\nSubject: " + filledSubject + "\n\nBody:\n" + filledBody + "\n\nGenerate " + emails_to_generate + " variations." },
       ], { temperature: 0.4, max_tokens: 4096 });
     } catch (err) {
       console.error("[business-email] AI variation error:", err.message);
@@ -151,7 +152,7 @@ export async function businessEmail(input, req) {
     ? variations.map((v) => v.body)
     : [filledBody];
 
-  const emails = Array.from({ length: Math.min(emailsToGenerate, subjectLines.length) }, (_, i) => ({
+  const emails = Array.from({ length: Math.min(emails_to_generate, subjectLines.length) }, (_, i) => ({
     subject: subjectLines[i % subjectLines.length],
     body: bodies[i % bodies.length],
     tone: tone_override || preset.tone,

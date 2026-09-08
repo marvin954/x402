@@ -157,7 +157,9 @@ export async function aiAgentExecute(input, req) {
             return n;
           }));
           const stepNorm = (stepToolKey || "").replace(/_/g, "").replace(/-/g, "").toLowerCase();
-
+          if (!allowedNorm.has(stepNorm)) {
+            throw new Error("Tool not in allowed_tools: " + step.tool);
+          }
         }
         const toolResult = await withConcurrency(async () =>
           enforceTimeout(timeoutPerStep + 2000, async () =>

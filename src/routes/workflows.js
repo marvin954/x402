@@ -250,6 +250,9 @@ router.post("/business-blueprint", async (req, res) => {
     if (!idea || typeof idea !== "string" || idea.trim().length < 5) {
       return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: '"business_idea" is required (string, min 5 chars)' } });
     }
+    if (body.pricing_tier && !["basic","intermediate","advanced","starter","beginner","easy","low","medium","moderate","hard","complex","expert","enterprise"].includes(body.pricing_tier)) {
+      return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: '"pricing_tier" must be one of: basic, intermediate, advanced, starter, beginner, easy, low, medium, moderate, hard, complex, expert, enterprise' } });
+    }
     const result = await _meta(req, "business-blueprint", () => businessBlueprint(body, req));
     return res.status(result.success ? 200 : 500).json(result);
   } catch (err) {
