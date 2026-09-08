@@ -639,6 +639,22 @@ router.get("/", async (req, res) => {
                 { name: "max_steps", type: "integer", required: false, description: "Maximum execution steps (default 15)" },
               ],
             },
+            {
+              slug: "lead-extraction",
+              name: "Lead Extraction",
+              description: "Extract qualified leads from unstructured text: webpage content, email threads, social posts, CRM notes. Parses names, companies, contact info, pain points, and budget signals with confidence scores. $1.00 per extraction.",
+              category: "lead-generation",
+              tags: ["lead-generation", "extraction", "parsing", "contact", "lead", "data-extraction", "enrichment", "prospecting"],
+              upstreamUrl: "/api/workflows/lead-extraction",
+              method: "POST",
+              priceAtomic: 1000000,
+              queryParameters: [
+                { name: "source_url", type: "string", required: false, description: "URL to scrape and extract leads from" },
+                { name: "text", type: "string", required: false, description: "Raw text content to extract leads from (alternative to source_url)" },
+                { name: "content", type: "string", required: false, description: "Alias for text parameter" },
+                { name: "raw_text", type: "string", required: false, description: "Alias for text parameter" },
+              ],
+            },
           ],
         },
       ];

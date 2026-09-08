@@ -14,6 +14,7 @@ import {
 import { errorResponse, _meta } from "../lib/response.js";
 
 import { leadResearch } from "../services/workflows/lead-research.js";
+import { leadExtraction } from "../services/workflows/lead-extraction.js";
 import { websiteAudit } from "../services/workflows/website-audit.js";
 import { salesProspect } from "../services/workflows/sales-prospect.js";
 import { competitorAnalysis } from "../services/workflows/competitor-analysis.js";
@@ -419,6 +420,22 @@ router.post("/ai-agent", async (req, res) => {
     return res.status(result.success ? 200 : 500).json(result);
   } catch (err) {
     return res.status(500).json({ success: false, error: { code: "INTERNAL_ERROR", message: "Agent execution failed" } });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────
+// 21. Lead Extraction
+// ────────────────────────────────────────────────────────────────
+router.post("/lead-extraction", async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (!body.source_url && !body.text && !body.content && !body.raw_text) {
+      return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: '"source_url" or "text" is required' } });
+    }
+    const result = await _meta(req, "lead-extraction", () => leadExtraction(body, req));
+    return res.status(result.success ? 200 : 500).json(result);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: { code: "INTERNAL_ERROR", message: "Workflow execution failed" } });
   }
 });
 
