@@ -85,22 +85,11 @@ Return JSON only: { entities: [{name, type, confidence}], facts: [...], summary:
   }
 
   return success(true, {
-    data: {
-      ...structured,
-      metadata: {
-        processed_at: new Date().toISOString(),
-        entity_count: structured.entities?.length || 0,
-        source: "omittable-enrich",
-      },
+    ...structured,
+    metadata: {
+      processed_at: new Date().toISOString(),
+      entity_count: structured.entities?.length || 0,
+      source: "omittable-enrich",
     },
-    meta: withMeta(
-      {
-        endpoint: "omitempty-enrich",
-        version: "1.0.0",
-        model: "gpt-4o-mini",
-      },
-      req,
-      { entity_count: structured.entities?.length || 0, processed_at: new Date().toISOString() }
-    ),
   });
 }
