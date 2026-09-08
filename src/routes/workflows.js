@@ -12,6 +12,7 @@ import {
   validateUrl, validateNonEmptyString, validateEnum,
 } from "../lib/validation.js";
 import { errorResponse, _meta } from "../lib/response.js";
+import { omittableEnrich } from "../services/workflows/omitempty-enrich.js";
 
 import { leadResearch } from "../services/workflows/lead-research.js";
 import { leadExtraction } from "../services/workflows/lead-extraction.js";
@@ -433,6 +434,22 @@ router.post("/lead-extraction", async (req, res) => {
       return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: '"source_url" or "text" is required' } });
     }
     const result = await _meta(req, "lead-extraction", () => leadExtraction(body, req));
+    return res.status(result.success ? 200 : 500).json(result);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: { code: "INTERNAL_ERROR", message: "Workflow execution failed" } });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────
+// 21. OMIT Enrich
+// ────────────────────────────────────────────────────────────────
+router.post("/omitempty-enrich", async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (!body.text || typeof body.text !== "string" || body.text.trim().length < 1) {
+      return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: '"text" is required (non-empty string)' } });
+    }
+    const result = await _meta(req, "omitempty-enrich", () => omittableEnrich(body));
     return res.status(result.success ? 200 : 500).json(result);
   } catch (err) {
     return res.status(500).json({ success: false, error: { code: "INTERNAL_ERROR", message: "Workflow execution failed" } });

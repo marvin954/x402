@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors({
   origin: "*",
-  exposedHeaders: ["X-PAYMENT-RESPONSE", "X-PAYMENT-REQUIRED", "X-Request-Id"],
+  exposedHeaders: ["X-PAYMENT-RESPONSE", "X-PAYMENT-REQUIRED", "PAYMENT-SIGNATURE", "PAYMENT-RESPONSE", "X-Request-Id"],
 }));
 
 app.use(express.json({ limit: "2mb" }));

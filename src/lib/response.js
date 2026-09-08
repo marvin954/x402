@@ -15,7 +15,7 @@ export function withMeta(result, req, extra = {}) {
   return {
     ...result,
     metadata: {
-      requestId: req.requestId,
+      requestId: req?.requestId || undefined,
       completedAt: new Date().toISOString(),
       ...extra,
     },

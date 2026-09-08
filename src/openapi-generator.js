@@ -271,6 +271,51 @@ export async function generateOpenAPISpec() {
     }
   };
 
+  // POST /api/workflows/omitempty-enrich — OMIT Enrich passthrough
+  paths["/api/workflows/omitempty-enrich"] = {
+    post: {
+      summary: "OMIT Enrich",
+      description: "Simple enrichment passthrough: accepts text input and returns enriched entities (emails, phones, URLs, names) extracted via AI or regex fallback.",
+      security: [],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["text"],
+              properties: {
+                text: { type: "string", description: "Text to enrich (non-empty string)" },
+                entity_type: { type: "string", description: "Optional entity type hint" },
+                context: { type: "object", description: "Optional context object" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        "200": {
+          description: "Enriched entities",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  entities: { type: "array", items: { type: "object" } },
+                  facts: { type: "array", items: { type: "string" } },
+                  summary: { type: "string" },
+                  enriched: { type: "boolean" },
+                  method: { type: "string", enum: ["ai", "regex"] },
+                },
+              },
+            },
+          },
+        },
+        "400": { description: "Invalid request — missing or empty text" },
+      },
+    },
+  };
+
   // POST /v1/website/intelligence — Website intelligence scraper
   paths["/v1/website/intelligence"] = {
     post: {
