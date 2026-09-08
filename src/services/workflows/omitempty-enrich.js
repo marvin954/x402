@@ -84,12 +84,17 @@ Return JSON only: { entities: [{name, type, confidence}], facts: [...], summary:
     };
   }
 
-  return success(true, {
-    ...structured,
+  // Return enriched result (route handler wraps with success + _meta)
+  return {
+    entities: structured.entities || [],
+    facts: structured.facts || [],
+    summary: structured.summary || summary || "",
+    enriched: structured.enriched || false,
+    method: structured.method || "regex",
     metadata: {
       processed_at: new Date().toISOString(),
       entity_count: structured.entities?.length || 0,
       source: "omittable-enrich",
     },
-  });
+  };
 }
