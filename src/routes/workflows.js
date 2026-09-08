@@ -449,7 +449,7 @@ router.post("/omitempty-enrich", async (req, res) => {
     if (!body.text || typeof body.text !== "string" || body.text.trim().length < 1) {
       return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: '"text" is required (non-empty string)' } });
     }
-    const result = await _meta(req, "omitempty-enrich", () => omittableEnrich(body));
+    const result = await _meta(req, "omitempty-enrich", () => omittableEnrich(body, req));
     return res.status(result.success ? 200 : 500).json(result);
   } catch (err) {
     return res.status(500).json({ success: false, error: { code: "INTERNAL_ERROR", message: "Workflow execution failed" } });

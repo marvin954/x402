@@ -7,7 +7,7 @@
 import { chat, chatJson } from "../../lib/workflow-utils.js";
 import { success, withMeta } from "../../lib/response.js";
 
-export async function omittableEnrich(input) {
+export async function omittableEnrich(input, req) {
   const { text, entity_type, context } = input;
 
   if (!text || typeof text !== "string" || text.trim().length < 1) {
@@ -99,7 +99,7 @@ Return JSON only: { entities: [{name, type, confidence}], facts: [...], summary:
         version: "1.0.0",
         model: "gpt-4o-mini",
       },
-      null,
+      req,
       { entity_count: structured.entities?.length || 0, processed_at: new Date().toISOString() }
     ),
   });
