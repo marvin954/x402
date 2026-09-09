@@ -51,7 +51,7 @@ export async function contractReview(input, req) {
   const result = await analyzeContract(text);
   result.disclaimer = "IMPORTANT: This analysis is informational only and is NOT legal advice. Consult a qualified attorney for professional legal review of any contract. AI-generated summaries may miss important nuances — always read the original document.";
 
-  return { success: true, data: result, metadata: { completedAt: new Date().toISOString() } };
+  return result;
 }
 
 async function analyzeContract(text) {

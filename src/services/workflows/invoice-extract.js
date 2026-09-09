@@ -48,7 +48,7 @@ export async function invoiceExtract(input, req) {
   const extracted = extractInvoiceFields(text);
   const enriched = await enrichWithAI(text, extracted);
 
-  return { success: true, data: enriched, metadata: { completedAt: new Date().toISOString() } };
+  return enriched;
 }
 
 function clean(text) {

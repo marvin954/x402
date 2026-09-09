@@ -49,7 +49,7 @@ export async function documentAnalysis(input, req) {
   }
 
   const result = await analyzeDocument(text, document_type, filename);
-  return { success: true, data: result, metadata: { completedAt: new Date().toISOString() } };
+  return result;
 }
 
 async function analyzeDocument(text, docType, filename) {

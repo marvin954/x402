@@ -204,11 +204,11 @@ Return ONLY a valid JSON array. No markdown, no explanation.`
   const priorityRank = { high: 0, medium: 1, low: 2 };
   leads.sort((a, b) => (priorityRank[a.priority] - priorityRank[b.priority]) || (b.confidence - a.confidence));
 
-  return success(true, {
+  return {
     leads,
     source,
     total: leads.length,
     high_priority: leads.filter(l => l.priority === "high").length,
     meta: { workflow: "lead-extraction", version: "1.0" }
-  });
+  };
 }
