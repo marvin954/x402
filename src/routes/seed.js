@@ -630,7 +630,7 @@ router.get("/", async (req, res) => {
               description: "Takes a natural-language task, classifies it, estimates complexity, plans and executes subtasks using a controlled tool registry, and returns a structured result. Tool execution is controlled and permissioned — no arbitrary command execution. $1.00-$25.00+ based on complexity.",
               category: "ai-agent",
               tags: ["ai-agent", "task-execution", "automation", "agent", "orchestration", "tool-use", "complex-tasks", "intelligence"],
-              upstreamUrl: "/api/agent/execute",
+              upstreamUrl: "/api/workflows/ai-agent",
               method: "POST",
               priceAtomic: 3000000,
               queryParameters: [
